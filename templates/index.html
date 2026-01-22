@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Search Card -->
+<div class="card">
+    <h3 class="card-title">Search Inventory</h3>
+
+    <form method="GET" class="search-form">
+        <input
+            type="text"
+            name="search"
+            placeholder="Search by name or SKU"
+            value="{{ search_query }}"
+            class="search-input"
+        >
+        <button type="submit" class="primary-btn">Search</button>
+    </form>
+</div>
+
+<!-- Add Item Card -->
+<div class="card">
+    <h3 class="card-title">Add Item</h3>
+
+    <form method="POST" enctype="multipart/form-data" class="form-grid">
+        <input name="name" placeholder="Item name" required>
+        <input name="sku" placeholder="SKU" required>
+        <input name="weight" placeholder="Weight">
+        <input name="price" placeholder="Price">
+        <input type="file" name="photo">
+
+        <button type="submit" class="primary-btn">Add Item</button>
+    </form>
+</div>
+
+<!-- Inventory Items -->
+<div class="items inventory-spacing">
+{% for item in items %}
+    <div class="item-card">
+        <strong>{{ item.name }}</strong><br>
+
+        SKU: {{ item.sku }}<br>
+        Weight: {{ item.weight }}<br>
+        Price: {{ item.price }}<br>
+
+        <!-- Quantity Controls -->
+        <div class="quantity-row">
+            <form method="POST" action="/quantity/{{ item.id }}/decrease">
+                <button class="qty-btn">−</button>
+            </form>
+
+            <form
+    method="POST"
+    action="/quantity/set/{{ item.id }}"
+    class="quantity-form"
+>
+    <input
+        type="number"
+        name="quantity"
+        value="{{ item.quantity }}"
+        min="0"
+        class="quantity-input"
+        onchange="this.form.submit()"
+    >
+</form>
+
+            <form method="POST" action="/quantity/{{ item.id }}/increase">
+                <button class="qty-btn">+</button>
+            </form>
+        </div>
+
+        <!-- Barcode -->
+        <img src="{{ item.barcode_path }}" width="160">
+
+        <!-- Photo -->
+        {% if item.photo_path %}
+            <img src="{{ url_for('static', filename=item.photo_path) }}" width="160">
+        {% endif %}
+    </div>
+{% endfor %}
+</div>
+
+{% endblock %}

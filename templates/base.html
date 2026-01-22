@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+    <div class="nav-left">
+        <img
+            src="{{ url_for('static', filename='logo.png') }}"
+            class="logo"
+            alt="App logo"
+        >
+    </div>
+
+    <div class="nav-right">
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Inventory</a>
+            <a href="/summary" class="nav-link">Summary</a>
+            <a href="/scan" class="nav-link">Scan</a>
+            <a href="/admin" class="nav-link">Admin</a>
+        </nav>
+
+        <button
+            id="darkToggle"
+            class="dark-toggle"
+            aria-label="Toggle dark mode"
+        >
+            Dark Mode
+        </button>
+    </div>
+</header>
+
+<main class="page">
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+</body>
+</html>

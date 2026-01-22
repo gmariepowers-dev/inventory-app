@@ -1,0 +1,291 @@
+/* ================================
+   CSS VARIABLES
+================================ */
+:root {
+    --blue: #2563eb;
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #1f2937;
+}
+
+/* Dark Mode Variables */
+body.dark {
+    --bg: #0f172a;
+    --card: #020617;
+    --border: #1e293b;
+    --text: #e5e7eb;
+}
+
+/* ================================
+   BASE
+================================ */
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* ================================
+   HEADER / NAVIGATION
+================================ */
+.header {
+    position: sticky;
+    top: 0;
+    height: 64px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 10;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    height: 32px;
+}
+
+.app-name {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* Right side navigation */
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 18px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.nav-links a:hover {
+    background: var(--border);
+}
+
+/* ================================
+   DARK MODE TOGGLE
+================================ */
+.dark-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.dark-toggle:hover {
+    background: var(--bg);
+}
+
+body.dark .dark-toggle {
+    border-color: #334155;
+}
+
+/* ================================
+   PAGE LAYOUT
+================================ */
+.page {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* ================================
+   CARDS
+================================ */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+}
+
+.card-title {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* ================================
+   FORMS
+================================ */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+input {
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--blue);
+}
+
+/* ================================
+   BUTTONS
+================================ */
+.primary-btn {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: var(--blue);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.primary-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37,99,235,0.35);
+}
+
+/* Search bar */
+.search-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.search-form input[type="text"] {
+    flex: 1;
+    min-width: 360px;     
+    max-width: 600px;      
+}
+
+/* ================================
+   INVENTORY GRID
+================================ */
+.items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.item-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+/* Quantity Controls */
+.quantity-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.qty-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.qty-btn:hover {
+    background: var(--bg);
+    transform: scale(1.05);
+}
+
+.quantity {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+}
+.quantity-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.quantity-input {
+    width: 70px;
+    padding: 6px;
+    text-align: center;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+}
+
+.qty-btn,
+.qty-save {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+}
+
+.qty-save {
+    background: var(--blue);
+    color: white;
+    border: none;
+}
+.quantity-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.quantity-form {
+    margin: 0;
+}
+
+.quantity-input {
+    width: 60px;
+    text-align: center;
+}

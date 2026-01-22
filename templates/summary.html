@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Inventory Summary</h2>
+
+<div class="items">
+    <div class="item-card">
+        <strong>Total Items</strong><br>
+        {{ total_items }}
+    </div>
+
+    <div class="item-card">
+        <strong>Total Inventory Value</strong><br>
+        ${{ "%.2f"|format(total_value) }}
+    </div>
+
+    <div class="item-card">
+        <strong>Average Item Price</strong><br>
+        ${{ "%.2f"|format(avg_price) }}
+    </div>
+</div>
+
+{% endblock %}

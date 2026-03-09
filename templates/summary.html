@@ -4,21 +4,123 @@
 
 <h2>Inventory Summary</h2>
 
-<div class="items">
-    <div class="item-card">
-        <strong>Total Items</strong><br>
-        {{ total_items }}
+<div class="summary-grid">
+    <div class="summary-card">
+        <h4>Total Items</h4>
+        <p>{{ total_items }}</p>
     </div>
 
-    <div class="item-card">
-        <strong>Total Inventory Value</strong><br>
-        ${{ "%.2f"|format(total_value) }}
+    <div class="summary-card">
+        <h4>Total Quantity</h4>
+        <p>{{ total_quantity }}</p>
     </div>
 
-    <div class="item-card">
-        <strong>Average Item Price</strong><br>
-        ${{ "%.2f"|format(avg_price) }}
+    <div class="summary-card">
+        <h4>Total Inventory Value</h4>
+        <p>${{ "%.2f"|format(total_value or 0) }}</p>
     </div>
 </div>
+
+<hr>
+
+<h3>Inventory Charts</h3>
+
+<div class="chart-grid">
+    <div class="chart-card">
+        <h4>Item Quantities</h4>
+        <canvas id="quantityChart"></canvas>
+    </div>
+
+    <div class="chart-card small-chart">
+        <h4>Inventory Value</h4>
+        <canvas id="valueChart"></canvas>
+    </div>
+</div>
+
+<hr>
+
+<h3>Item Values</h3>
+
+<table class="summary-table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>SKU</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in item_values %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.sku }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ "%.2f"|format(item.price or 0) }}</td>
+            <td><strong>${{ "%.2f"|format(item.value or 0) }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+
+<h3>Low Stock Items</h3>
+
+{% if low_stock_items %}
+    <ul class="low-stock-list">
+        {% for item in low_stock_items %}
+            <li>⚠️ {{ item.name }} — {{ item.quantity }} left</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>🎉 No low stock items!</p>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const labels = {{ labels | default([]) | tojson }};
+    const quantities = {{ quantities | default([]) | tojson }};
+
+    if (!labels || labels.length === 0) return;
+
+    new Chart(document.getElementById("quantityChart"), {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Quantity",
+                data: quantities
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById("valueChart"), {
+        type: "pie",
+        data: {
+            labels: labels,
+            datasets: [{ data: values }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: "bottom", labels: { boxWidth: 12 } }
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}

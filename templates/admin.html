@@ -1,19 +1,76 @@
 {% extends "base.html" %}
-
-{% block title %}Admin{% endblock %}
-
 {% block content %}
-<h2>Admin Settings</h2>
 
-<p>This page is reserved for future admin features.</p>
+<div class="page-container">
 
-<div style="margin-top: 20px; padding: 16px; background: var(--card); border-radius: 12px;">
-    <p>Planned features:</p>
-    <ul>
-        <li>User roles</li>
-        <li>Delete items</li>
-        <li>Edit inventory</li>
-        <li>Permissions</li>
-    </ul>
+  <h2>Admin Dashboard</h2>
+  <p class="muted">Manage users and review system activity.</p>
+
+  <!-- USERS -->
+  <div class="card">
+    <h3>Users</h3>
+
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>{{ user.username }}</td>
+          <td>
+            {% if user.is_admin %}
+              <span class="badge-log">Admin</span>
+            {% else %}
+              <span class="badge-muted">User</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- AUDIT LOGS -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>Audit Logs</h3>
+      <a href="{{ url_for('view_audit_logs') }}" class="secondary-btn">Open Full Logs</a>
+    </div>
+
+    {% if logs %}
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs[:10] %}
+        <tr>
+          <td>{{ log.timestamp.strftime("%Y-%m-%d %H:%M") if log.timestamp else "" }}</td>
+          <td>{{ log.actor.username if log.actor else "System" }}</td>
+          <td>{{ log.action }}</td>
+          <td>{{ log.target or "" }}</td>
+          <td>{{ log.details or "" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="muted">No activity yet.</p>
+    {% endif %}
+  </div>
+
 </div>
+
 {% endblock %}

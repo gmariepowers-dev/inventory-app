@@ -1,83 +1,157 @@
 {% extends "base.html" %}
-
 {% block content %}
 
-<!-- Search Card -->
-<div class="card">
-    <h3 class="card-title">Search Inventory</h3>
+<div class="container">
 
-    <form method="GET" class="search-form">
+    <!-- ADD ITEM -->
+    <div class="card add-item-card">
+        <h2>Add New Item</h2>
+
+        <form method="POST" action="{{ url_for('index') }}" enctype="multipart/form-data">
+
+            <div class="form-row">
+                <input type="text" name="name" placeholder="Item Name" required>
+                <input type="text" name="sku" placeholder="SKU">
+            </div>
+
+            <div class="form-row">
+                <input type="number" name="quantity" placeholder="Quantity">
+                <input type="text" name="dimensions" placeholder="Dimensions">
+            </div>
+
+            <div class="form-row">
+                <input type="text" name="colorways" placeholder="Colorways">
+                <input type="text" name="manufacturer" placeholder="Manufacturer">
+            </div>
+
+            <div class="form-row">
+                <input type="number" step="0.01" name="cost_price" placeholder="Our Price">
+                <input type="number" step="0.01" name="retail_price" placeholder="Retail Price">
+            </div>
+
+            <div class="form-row">
+                <input type="file" name="image">
+            </div>
+
+            <button type="submit" class="primary-btn">Add Item</button>
+        </form>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="card">
         <input
             type="text"
-            name="search"
-            placeholder="Search by name or SKU"
-            value="{{ search_query }}"
-            class="search-input"
+            id="searchInput"
+            placeholder="Search items..."
+            onkeyup="filterItems()"
         >
-        <button type="submit" class="primary-btn">Search</button>
-    </form>
+    </div>
+
+    <!-- ITEM GRID -->
+    <div class="item-grid">
+        {% for item in items %}
+        <div class="item-card" onclick="openItemModal({{ item.id }})">
+
+            <img 
+                src="{{ item.image_path if item.image_path else url_for('static', filename='placeholder.png') }}" 
+                alt="{{ item.name }}"
+            >
+
+            <h3>{{ item.name }}</h3>
+            <p>SKU: {{ item.sku or "—" }}</p>
+            <p>Qty: {{ item.quantity or 0 }}</p>
+
+        </div>
+        {% endfor %}
+    </div>
+
 </div>
 
-<!-- Add Item Card -->
-<div class="card">
-    <h3 class="card-title">Add Item</h3>
+<!-- MODAL -->
+<div id="itemModal" class="modal" style="display:none;">
+    <div class="modal-card">
 
-    <form method="POST" enctype="multipart/form-data" class="form-grid">
-        <input name="name" placeholder="Item name" required>
-        <input name="sku" placeholder="SKU" required>
-        <input name="weight" placeholder="Weight">
-        <input name="price" placeholder="Price">
-        <input type="file" name="photo">
+        <button class="close-btn" onclick="closeItemModal()">✕</button>
 
-        <button type="submit" class="primary-btn">Add Item</button>
-    </form>
-</div>
+        <div class="modal-grid">
 
-<!-- Inventory Items -->
-<div class="items inventory-spacing">
-{% for item in items %}
-    <div class="item-card">
-        <strong>{{ item.name }}</strong><br>
+            <div class="modal-left">
+                <h2 id="modalName"></h2>
+                <img id="modalImage" src="">
+            </div>
 
-        SKU: {{ item.sku }}<br>
-        Weight: {{ item.weight }}<br>
-        Price: {{ item.price }}<br>
+            <div class="modal-right">
+                <p><strong>SKU:</strong> <span id="modalSku"></span></p>
+                <p><strong>Quantity:</strong> <span id="modalQty"></span></p>
+                <p><strong>Dimensions:</strong> <span id="modalDimensions"></span></p>
+                <p><strong>Colors:</strong> <span id="modalColors"></span></p>
+                <p><strong>Manufacturer:</strong> <span id="modalManufacturer"></span></p>
+                <p><strong>Our Price:</strong> $<span id="modalCost"></span></p>
+                <p><strong>Retail Price:</strong> $<span id="modalRetail"></span></p>
 
-        <!-- Quantity Controls -->
-        <div class="quantity-row">
-            <form method="POST" action="/quantity/{{ item.id }}/decrease">
-                <button class="qty-btn">−</button>
-            </form>
+                <div class="barcode-container">
+                    <img id="modalBarcode" src="">
+                </div>
+            </div>
 
-            <form
-    method="POST"
-    action="/quantity/set/{{ item.id }}"
-    class="quantity-form"
->
-    <input
-        type="number"
-        name="quantity"
-        value="{{ item.quantity }}"
-        min="0"
-        class="quantity-input"
-        onchange="this.form.submit()"
-    >
-</form>
-
-            <form method="POST" action="/quantity/{{ item.id }}/increase">
-                <button class="qty-btn">+</button>
-            </form>
         </div>
 
-        <!-- Barcode -->
-        <img src="{{ item.barcode_path }}" width="160">
+        <div class="modal-actions">
+            <button class="primary-btn" id="generateLabelBtn">Generate Label</button>
+            <a id="orderLink" class="secondary-btn" target="_blank">Order</a>
+        </div>
 
-        <!-- Photo -->
-        {% if item.photo_path %}
-            <img src="{{ url_for('static', filename=item.photo_path) }}" width="160">
-        {% endif %}
     </div>
-{% endfor %}
 </div>
+
+<script>
+const modal = document.getElementById("itemModal")
+
+function setText(id, value) {
+    document.getElementById(id).innerText = value ?? "—"
+}
+
+function openItemModal(id) {
+    fetch(`/item/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            modal.style.display = "flex"
+
+            setText('modalName', data.name)
+            setText('modalSku', data.sku)
+            setText('modalQty', data.quantity)
+            setText('modalDimensions', data.dimensions)
+            setText('modalColors', data.colorways)
+            setText('modalManufacturer', data.manufacturer)
+            setText('modalCost', data.cost_price)
+            setText('modalRetail', data.retail_price)
+
+            document.getElementById('modalImage').src = data.image_url
+            document.getElementById('modalBarcode').src = data.barcode_url
+            document.getElementById('orderLink').href = data.order_link
+
+            document.getElementById('generateLabelBtn').onclick = () => {
+                window.location.href = `/generate-label/${data.id}`
+            }
+        })
+}
+
+function closeItemModal() {
+    modal.style.display = "none"
+}
+
+window.addEventListener("click", e => {
+    if (e.target === modal) closeItemModal()
+})
+
+function filterItems() {
+    const input = document.getElementById("searchInput").value.toLowerCase()
+
+    document.querySelectorAll(".item-card").forEach(card => {
+        const text = card.innerText.toLowerCase()
+        card.style.display = text.includes(input) ? "block" : "none"
+    })
+}
+</script>
 
 {% endblock %}

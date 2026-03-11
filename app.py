@@ -264,6 +264,25 @@ def export_audit_logs():
                     headers={"Content-Disposition": "attachment;filename=audit_logs.csv"})
 
 # --------------------
+# Barcode Scanner
+# --------------------
+@app.route("/scan/<barcode>")
+@login_required
+def scan_item(barcode):
+
+    barcode = barcode.strip()
+
+    item = Item.query.filter(Item.sku.contains(barcode)).first()
+
+    if not item:
+        return {"found": False}
+
+    return {
+        "found": True,
+        "id": item.id
+    }
+
+# --------------------
 # Create default admin
 # --------------------
 def create_admin_if_missing():

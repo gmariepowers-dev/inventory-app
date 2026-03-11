@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 
+<button class="primary-btn" onclick="openScanner()">
+Scan Barcode
+</button>
+
 <div class="container">
 
     <!-- ADD ITEM -->
@@ -139,6 +143,20 @@ onchange="updatePreviewQty({{ item.id }}, this.value)"
   </div>
 </div>
 
+<div id="scannerModal" class="modal" style="display:none;">
+
+  <div class="modal-card">
+
+    <button class="close-btn" onclick="closeScanner()">✕</button>
+
+    <h2>Scan Barcode</h2>
+
+    <div id="scanner" style="width:400px;"></div>
+
+  </div>
+
+</div>
+
 <script>
 
 let currentItemId = null
@@ -226,5 +244,66 @@ function closeItemModal(){
 document.getElementById("itemModal").style.display="none"
 }
 
+let scanner
+let scanning = false
+
+function openScanner(){
+
+document.getElementById("scannerModal").style.display = "flex"
+
+scanner = new Html5Qrcode("scanner")
+
+scanner.start(
+{ facingMode: "environment" },
+{
+fps: 10,
+qrbox: { width: 300, height: 150 }
+},
+barcode => {
+
+if(scanning) return
+scanning = true
+
+console.log("Scanned:", barcode)
+
+searchItem(barcode)
+
+scanner.stop()
+closeScanner()
+
+}
+
+)
+
+}
+
+function closeScanner(){
+
+document.getElementById("scannerModal").style.display="none"
+
+if(scanner){
+scanner.stop()
+}
+
+}
+function searchItem(barcode){
+
+fetch(`/scan/${barcode}`)
+.then(res=>res.json())
+.then(data=>{
+
+if(data.found){
+
+openItemModal(data.id)
+
+}else{
+
+alert("Item not found for barcode: " + barcode)
+
+}
+
+})
+
+}
 </script>
 {% endblock %}

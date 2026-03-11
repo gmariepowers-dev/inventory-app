@@ -138,6 +138,20 @@ def index():
     items = Item.query.all()
     return render_template("index.html", items=items)
 
+@app.route("/set-quantity/<int:item_id>", methods=["POST"])
+@login_required
+def set_quantity(item_id):
+
+    item = Item.query.get_or_404(item_id)
+
+    data = request.get_json()
+    new_qty = int(data.get("quantity",0))
+
+    item.quantity = new_qty
+
+    db.session.commit()
+
+    return jsonify({"success": True})
 # --------------------
 # Summary
 # --------------------
@@ -168,23 +182,21 @@ def summary():
 # --------------------
 @app.route("/labels")
 @login_required
-def labels():
-    return render_template("labels.html", items=Item.query.all())
+def labels_page():
+    items = Item.query.all()
+    return render_template("labels.html", items=items)
+
 
 @app.route("/generate-label/<int:item_id>")
 @login_required
 def generate_label(item_id):
+
     item = Item.query.get_or_404(item_id)
 
-    barcode_dir = os.path.join(app.static_folder, "barcodes")
-    os.makedirs(barcode_dir, exist_ok=True)
-    barcode = Code128(item.sku, writer=ImageWriter())
-    barcode.save(os.path.join(barcode_dir, item.sku))
-
-    log_audit("generate_label", target=item.sku)
-    flash("Label generated!", "success")
-    return redirect(url_for("index"))
-
+    return render_template(
+        "labels.html",
+        item=item
+    )
 # --------------------
 # Item API (modal)
 # --------------------
@@ -232,6 +244,24 @@ def create_user():
 def view_audit_logs():
     logs = AuditLog.query.order_by(AuditLog.id.desc()).limit(200).all()
     return render_template("audit_logs.html", logs=logs)
+
+from flask import Response
+import csv
+
+@app.route("/admin/audit/export")
+@login_required
+@admin_required
+def export_audit_logs():
+    logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).all()
+
+    def generate():
+        data = csv.writer([])
+        yield "timestamp,user,action,item\n"
+        for log in logs:
+            yield f"{log.timestamp},{log.user_id},{log.action},{log.item_id}\n"
+
+    return Response(generate(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=audit_logs.csv"})
 
 # --------------------
 # Create default admin

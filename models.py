@@ -41,6 +41,7 @@ class Item(db.Model):
 
     quantity = db.Column(db.Integer, default=0)
 
+    weight = db.Column(db.String(50))
     dimensions = db.Column(db.String(200))
     colorways = db.Column(db.String(200))
     manufacturer = db.Column(db.String(200))
@@ -53,6 +54,21 @@ class Item(db.Model):
     barcode_path = db.Column(db.String(300))
     image_path = db.Column(db.String(300))
 
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "sku": self.sku,
+            "quantity": self.quantity,
+            "weight": self.weight,
+            "dimensions": self.dimensions,
+            "colorways": self.colorways,
+            "manufacturer": self.manufacturer,
+            "order_link": self.order_link,
+            "image_url": self.image_path,
+            "barcode_url": self.barcode_path
+        }
 # --------------------
 # Audit Log
 # --------------------

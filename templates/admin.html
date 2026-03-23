@@ -6,35 +6,59 @@
   <h2>Admin Dashboard</h2>
   <p class="muted">Manage users and review system activity.</p>
 
-  <!-- USERS -->
-  <div class="card">
-    <h3>Users</h3>
+<!-- USER MANAGEMENT -->
+<div class="card">
+    <div class="card-header">
+        <h2>Users</h2>
+        <a class="btn-primary" href="/admin/add-user">Add User</a>
+    </div>
 
-    <table class="summary-table">
-      <thead>
+    <<table class="table">
+    <thead>
         <tr>
-          <th>ID</th>
-          <th>Username</th>
-          <th>Role</th>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Actions</th> <!-- NEW -->
         </tr>
-      </thead>
-      <tbody>
+    </thead>
+    <tbody>
         {% for user in users %}
         <tr>
-          <td>{{ user.id }}</td>
-          <td>{{ user.username }}</td>
-          <td>
-            {% if user.is_admin %}
-              <span class="badge-log">Admin</span>
-            {% else %}
-              <span class="badge-muted">User</span>
-            {% endif %}
-          </td>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+
+            <!-- EDIT FORM -->
+            <td>
+                <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+                    <select name="role">
+                        <option value="admin" {% if user.role == "admin" %}selected{% endif %}>Admin</option>
+                        <option value="editor" {% if user.role == "editor" %}selected{% endif %}>Editor</option>
+                        <option value="viewer" {% if user.role == "viewer" %}selected{% endif %}>Viewer</option>
+                    </select>
+            </td>
+
+            <td>
+                    <button type="submit" class="primary-btn">Save</button>
+                </form>
+
+                <!-- DELETE BUTTON -->
+                <form method="POST"
+                      action="{{ url_for('delete_user', user_id=user.id) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Delete this user?')">
+
+                    <button type="submit" class="secondary-btn">
+                        Delete
+                    </button>
+                </form>
+            </td>
+
         </tr>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    </tbody>
+</table>
+</div>
 
   <!-- AUDIT LOGS -->
   <div class="card">
@@ -57,7 +81,7 @@
       <tbody>
         {% for log in logs[:10] %}
         <tr>
-          <td>{{ log.timestamp.strftime("%Y-%m-%d %H:%M") if log.timestamp else "" }}</td>
+          <td>{{ log.created_at.strftime("%Y-%m-%d %H:%M") if log.created_at else "" }}</td>
           <td>{{ log.actor.username if log.actor else "System" }}</td>
           <td>{{ log.action }}</td>
           <td>{{ log.target or "" }}</td>

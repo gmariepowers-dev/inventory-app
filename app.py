@@ -70,7 +70,7 @@ def log_audit(action, target=None, details=None):
 def login():
     if request.method == "POST":
         user = User.query.filter_by(username=request.form["username"]).first()
-        if user and check_password_hash(user.password, request.form["password"]):
+        if user and check_password_hash(user.password_hash, request.form["password"]):
             login_user(user)
             log_audit("login", target=user.username)
             return redirect(request.args.get("next") or url_for("index"))
@@ -213,13 +213,20 @@ def get_item(item_id):
 @login_required
 @admin_required
 def admin():
-    log_audit("view_admin")
-    return render_template("admin.html", users=User.query.all())
+    users = User.query.all()
+    logs = AuditLog.query.order_by(AuditLog.id.desc()).limit(10).all()
+
+    return render_template(
+        "admin.html",
+        users=users,
+        logs=logs
+    )
 
 @app.route("/admin/users/create", methods=["POST"])
 @login_required
 @admin_required
 def create_user():
+
     username = request.form["username"]
     password = request.form["password"]
     is_admin = bool(request.form.get("is_admin"))
@@ -228,11 +235,82 @@ def create_user():
         flash("User already exists", "error")
         return redirect(url_for("admin"))
 
-    db.session.add(User(username=username, password=generate_password_hash(password), is_admin=is_admin))
+    new_user = User(
+        username=username,
+        password_hash=generate_password_hash(password),
+        role="admin" if is_admin else "viewer"
+    )
+
+    db.session.add(new_user)
     db.session.commit()
 
     log_audit("create_user", target=username)
+
     flash("User created", "success")
+
+    return redirect(url_for("admin"))
+
+from werkzeug.security import generate_password_hash
+
+@app.route("/admin/add-user", methods=["GET", "POST"])
+@login_required
+@admin_required
+def add_user():
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+        role = request.form["role"]
+
+        new_user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            role=role
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect(url_for("admin"))  # ✅ INSIDE function
+
+    return render_template("add_user.html")
+
+@app.route("/admin/users/edit/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def edit_user(user_id):
+
+    user = User.query.get_or_404(user_id)
+
+    # Prevent deleting/changing yourself dangerously later if you want
+    new_role = request.form["role"]
+    user.role = new_role
+
+    db.session.commit()
+
+    log_audit("edit_user", target=user.username, details=f"role -> {new_role}")
+
+    flash("User updated", "success")
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def delete_user(user_id):
+
+    user = User.query.get_or_404(user_id)
+
+    if user.username == "admin":
+        flash("Cannot delete main admin", "error")
+        return redirect(url_for("admin"))
+
+    db.session.delete(user)
+    db.session.commit()
+
+    log_audit("delete_user", target=user.username)
+
+    flash("User deleted", "success")
     return redirect(url_for("admin"))
 
 # --------------------
@@ -258,7 +336,7 @@ def export_audit_logs():
         data = csv.writer([])
         yield "timestamp,user,action,item\n"
         for log in logs:
-            yield f"{log.timestamp},{log.user_id},{log.action},{log.item_id}\n"
+            yield f"{log.created_at},{log.actor_id},{log.action},{log.target}\n"
 
     return Response(generate(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment;filename=audit_logs.csv"})
@@ -286,9 +364,18 @@ def scan_item(barcode):
 # Create default admin
 # --------------------
 def create_admin_if_missing():
+
     if not User.query.filter_by(username="admin").first():
-        db.session.add(User(username="admin", password=generate_password_hash("admin123"), is_admin=True))
+
+        admin = User(
+            username="admin",
+            password_hash=generate_password_hash("admin123"),
+            role="admin"
+        )
+
+        db.session.add(admin)
         db.session.commit()
+
 
 # --------------------
 # Run
@@ -297,4 +384,5 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         create_admin_if_missing()
+
     app.run(debug=True)

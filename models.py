@@ -7,14 +7,16 @@ db = SQLAlchemy()
 # --------------------
 # User
 # --------------------
-class User(db.Model, UserMixin):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
 
-    is_admin = db.Column(db.Boolean, default=False)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+
+    role = db.Column(db.String(20), default="viewer")
+    # roles: admin, editor, viewer
 
     audit_logs = db.relationship(
         "AuditLog",
@@ -22,12 +24,13 @@ class User(db.Model, UserMixin):
         cascade="all, delete-orphan",
     )
 
-    # Flask-Login expects this attribute
     @property
     def is_active(self):
         return True
-
-
+    
+    @property
+    def is_admin(self):
+        return self.role == "admin"
 # --------------------
 # Item
 # --------------------

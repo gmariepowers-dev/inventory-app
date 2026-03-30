@@ -2,76 +2,70 @@
 
 {% block content %}
 
-<h2>Audit Logs</h2>
-<p class="muted-text">
-  Track important admin and system actions.
-</p>
+<div class="card">
 
-<a href="{{ url_for('admin') }}"
-   class="btn btn-outline btn-sm">
-  ← Back to Admin
-</a>
+  <h2>Audit Logs</h2>
 
-<a href="{{ url_for('export_audit_logs') }}"
-   class="btn btn-primary btn-sm">
-  Export CSV
-</a>
+  <p class="muted-text">
+    Track important admin and system actions.
+  </p>
+
+  <div style="display:flex; gap:10px; margin-bottom:16px;">
+    <a href="{{ url_for('admin') }}" class="secondary-btn">
+      ← Back to Admin
+    </a>
+
+    <a href="{{ url_for('export_audit_logs') }}" class="primary-btn">
+      Export CSV
+    </a>
+  </div>
+
+  {% if logs %}
+
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Actor</th>
+        <th>Action</th>
+        <th>Target</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+
+        <td>
+          {% if log.actor %}
+            {{ log.actor.username }}
+          {% else %}
+            <em class="muted-text">System</em>
+          {% endif %}
+        </td>
+
+        <td>
+          <span class="badge-log">{{ log.action }}</span>
+        </td>
+
+        <td>{{ log.target or "—" }}</td>
+
+        <td>{{ log.details or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+
+  <p class="muted-text">
+    No audit logs recorded yet.
+  </p>
+
+  {% endif %}
+
 </div>
-
-<hr class="soft-divider">
-
-{% if logs %}
-
-<table class="summary-table">
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>Actor</th>
-      <th>Action</th>
-      <th>Target</th>
-      <th>Details</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    {% for log in logs %}
-    <tr>
-      <td>
-        {{ log.created_at.strftime("%Y-%m-%d %H:%M:%S") }}
-      </td>
-
-      <td>
-        {% if log.actor %}
-          {{ log.actor.username }}
-        {% else %}
-          <em class="muted-text">System</em>
-        {% endif %}
-      </td>
-
-      <td>
-        <span class="badge badge-log">
-          {{ log.action }}
-        </span>
-      </td>
-
-      <td>
-        {{ log.target or "—" }}
-      </td>
-
-      <td class="log-details">
-        {{ log.details or "" }}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-{% else %}
-
-<p class="muted-text">
-  No audit logs recorded yet.
-</p>
-
-{% endif %}
 
 {% endblock %}

@@ -1,10 +1,13 @@
-from flask import Flask, request, render_template, redirect, url_for, abort, flash, jsonify
+from flask import Flask, request, render_template, redirect, url_for, abort, flash, jsonify, Response
 from models import db, Item, User, AuditLog
-import os
-from functools import wraps
+import os,time, shutil, csv
+import time
+import shutil
+import csv
 
+from functools import wraps
 from barcode import Code128
-from barcode.writer import ImageWriter
+from barcode.writer import ImageWriter 
 
 from flask_login import (
     LoginManager,
@@ -13,16 +16,29 @@ from flask_login import (
     login_required,
     current_user,
 )
+
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+
+# --------------------
+# Config
+# --------------------
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # --------------------
 # App setup
 # --------------------
 app = Flask(__name__, static_folder="static", template_folder="templates", instance_relative_config=True)
-app.config["SECRET_KEY"] = "dev-secret-change-later"
+
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024 #5MB upload limit
 
 os.makedirs(app.instance_path, exist_ok=True)
 db_path = os.path.join(app.instance_path, "inventory.db")
+
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -70,11 +86,14 @@ def log_audit(action, target=None, details=None):
 def login():
     if request.method == "POST":
         user = User.query.filter_by(username=request.form["username"]).first()
-        if user and check_password_hash(user.password, request.form["password"]):
+
+        if user and check_password_hash(user.password_hash, request.form["password"]):
             login_user(user)
             log_audit("login", target=user.username)
             return redirect(request.args.get("next") or url_for("index"))
+        
         flash("Invalid username or password", "error")
+
     return render_template("login.html")
 
 @app.route("/logout")
@@ -90,13 +109,39 @@ def logout():
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
+
     if request.method == "POST":
         sku = request.form["sku"]
+
+        # Validation
+        if not sku:
+            flash("SKU is required", "error")
+            return redirect(url_for("index"))
+
+        if not request.form["name"]:
+            flash("Item name is required", "error")
+            return redirect(url_for("index"))
+        
+        if len(request.form["name"]) > 200:
+            flash("Name too long", "error")
+            return redirect(url_for("index"))
+        
+        if len(sku) > 100:
+            flash("SKU too long", "error")
+            return redirect(url_for("index"))
 
         if Item.query.filter_by(sku=sku).first():
             flash("SKU already exists", "error")
             return redirect(url_for("index"))
 
+        # Quantity validation
+        qty = int(request.form.get("quantity") or 0)
+
+        if qty < 0:
+            flash("Quantity cannot be negative", "error")
+            return redirect(url_for("index"))
+
+        # Barcode 
         barcode_dir = os.path.join(app.static_folder, "barcodes")
         os.makedirs(barcode_dir, exist_ok=True)
 
@@ -104,20 +149,27 @@ def index():
         barcode.save(os.path.join(barcode_dir, sku))
         barcode_path = f"/static/barcodes/{sku}.png"
 
+        # Image upload
         image = request.files.get("image")
         image_path = None
 
         if image and image.filename:
+            if not allowed_file(image.filename):
+                flash("Invalid image type", "error")
+                return redirect(url_for("index"))
+            
             image_dir = os.path.join(app.static_folder, "uploads")
             os.makedirs(image_dir, exist_ok=True)
-            filename = f"{sku}_{image.filename}"
+
+            filename = secure_filename(f"{sku}_{image.filename}")
             image.save(os.path.join(image_dir, filename))
             image_path = f"/static/uploads/{filename}"
 
+        # Create item
         item = Item(
             name=request.form["name"],
             sku=sku,
-            quantity=int(request.form.get("quantity") or 0),
+            quantity=qty,
             dimensions=request.form.get("dimensions"),
             colorways=request.form.get("colorways"),
             manufacturer=request.form.get("manufacturer"),
@@ -138,27 +190,80 @@ def index():
     items = Item.query.all()
     return render_template("index.html", items=items)
 
+# --------------------
+# Item APIs
+# --------------------
+@app.route("/item/<int:item_id>")
+@login_required
+def get_item(item_id):
+    return jsonify(Item.query.get_or_404(item_id).to_dict())
+
+@app.route("/edit-item/<int:item_id>", methods=["POST"])
+@login_required
+def edit_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    data = request.get_json()
+
+    item.manufacturer = data.get("manufacturer")
+    item.dimensions = data.get("dimensions")
+    item.colorways = data.get("colorways")
+    item.cost_price = float(data.get("cost_price") or 0)
+    item.retail_price = float(data.get("retail_price") or 0)
+
+    db.session.commit()
+    log_audit("edit_item", target=item.sku)
+
+    return jsonify({"success": True})
+
 @app.route("/set-quantity/<int:item_id>", methods=["POST"])
 @login_required
 def set_quantity(item_id):
-
     item = Item.query.get_or_404(item_id)
-
     data = request.get_json()
-    new_qty = int(data.get("quantity",0))
+
+    new_qty = int(data.get("quantity", 0))
+    if new_qty < 0:
+        return jsonify({"error": "Invalid quantity"}), 400
 
     item.quantity = new_qty
+    db.session.commit()
+
+    log_audit("set_quantity", target=item.sku, details=str(new_qty))
+
+    return jsonify({"success": True})
+
+@app.route("/adjust-quantity/<int:item_id>", methods=["POST"])
+@login_required
+def adjust_quantity(item_id):
+    item = Item.query.get_or_404(item_id)
+    data = request.get_json()
+
+    change = int(data.get("change", 0))
+    item.quantity = max(0, (item.quantity or 0) + change)
 
     db.session.commit()
 
-    return jsonify({"success": True})
+    return jsonify({"new_quantity": item.quantity})
+
+@app.route("/delete-item/<int:item_id>", methods=["POST"])
+@login_required
+def delete_item(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    db.session.delete(item)
+    db.session.commit()
+
+    log_audit("delete_item", target=item.sku)
+
+    flash("Item deleted", "success")
+    return redirect(url_for("index"))
+
 # --------------------
 # Summary
 # --------------------
 @app.route("/summary")
 @login_required
 def summary():
-
     items = Item.query.all()
 
     total_items = len(items)
@@ -177,34 +282,19 @@ def summary():
         labels=labels,
         quantities=quantities
     )
+
 # --------------------
 # Labels
 # --------------------
 @app.route("/labels")
 @login_required
 def labels_page():
-    items = Item.query.all()
-    return render_template("labels.html", items=items)
-
+    return render_template("labels.html", items=Item.query.all())
 
 @app.route("/generate-label/<int:item_id>")
 @login_required
 def generate_label(item_id):
-
-    item = Item.query.get_or_404(item_id)
-
-    return render_template(
-        "labels.html",
-        item=item
-    )
-# --------------------
-# Item API (modal)
-# --------------------
-@app.route("/item/<int:item_id>")
-@login_required
-def get_item(item_id):
-    item = Item.query.get_or_404(item_id)
-    return jsonify(item.to_dict())
+    return render_template("labels.html", item=Item.query.get_or_404(item_id))
 
 # --------------------
 # Admin
@@ -213,13 +303,20 @@ def get_item(item_id):
 @login_required
 @admin_required
 def admin():
-    log_audit("view_admin")
-    return render_template("admin.html", users=User.query.all())
+    users = User.query.all()
+    logs = AuditLog.query.order_by(AuditLog.id.desc()).limit(10).all()
+
+    return render_template(
+        "admin.html",
+        users=users,
+        logs=logs
+    )
 
 @app.route("/admin/users/create", methods=["POST"])
 @login_required
 @admin_required
 def create_user():
+
     username = request.form["username"]
     password = request.form["password"]
     is_admin = bool(request.form.get("is_admin"))
@@ -228,11 +325,86 @@ def create_user():
         flash("User already exists", "error")
         return redirect(url_for("admin"))
 
-    db.session.add(User(username=username, password=generate_password_hash(password), is_admin=is_admin))
+    new_user = User(
+        username=username,
+        password_hash=generate_password_hash(password),
+        role="admin" if is_admin else "viewer"
+    )
+
+    db.session.add(new_user)
     db.session.commit()
 
     log_audit("create_user", target=username)
+
     flash("User created", "success")
+
+    return redirect(url_for("admin"))
+
+@app.route("/admin/add-user", methods=["GET", "POST"])
+@login_required
+@admin_required
+def add_user():
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+        role = request.form["role"]
+
+        new_user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            role=role
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect(url_for("admin"))  # ✅ INSIDE function
+
+    return render_template("add_user.html")
+
+@app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def delete_user(user_id):
+
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash("You cannot delete yourself", "error")
+        return redirect(url_for("admin"))
+
+    if user.username == "admin":
+        flash("Cannot delete main admin", "error")
+        return redirect(url_for("admin"))
+
+    db.session.delete(user)
+    db.session.commit()
+
+    log_audit("delete_user", target=user.username)
+
+    flash("User deleted", "success")
+    return redirect(url_for("admin"))
+
+@app.route("/admin/users/edit/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def edit_user(user_id):
+
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash("You cannot change your own role", "error")
+        return redirect(url_for("admin"))
+
+    new_role = request.form["role"]
+    user.role = new_role
+
+    db.session.commit()
+
+    log_audit("edit_user", target=user.username, details=f"role -> {new_role}")
+
+    flash("User updated", "success")
     return redirect(url_for("admin"))
 
 # --------------------
@@ -252,16 +424,28 @@ import csv
 @login_required
 @admin_required
 def export_audit_logs():
-    logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).all()
+    logs = AuditLog.query.order_by(AuditLog.created_at.desc()).all()
 
     def generate():
-        data = csv.writer([])
         yield "timestamp,user,action,item\n"
         for log in logs:
-            yield f"{log.timestamp},{log.user_id},{log.action},{log.item_id}\n"
+            yield f"{log.created_at},{log.actor_id},{log.action},{log.target}\n"
 
     return Response(generate(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment;filename=audit_logs.csv"})
+
+# --------------------
+# Backup
+# --------------------
+@app.route("/admin/backup")
+@login_required
+@admin_required
+def backup_db():
+    backup_path = os.path.join(app.instance_path, f"backup_{int(time.time())}.db")
+    shutil.copy(db_path, backup_path)
+    flash("Backup created", "success")
+    return redirect(url_for("admin"))
+
 
 # --------------------
 # Barcode Scanner
@@ -286,9 +470,32 @@ def scan_item(barcode):
 # Create default admin
 # --------------------
 def create_admin_if_missing():
+
     if not User.query.filter_by(username="admin").first():
-        db.session.add(User(username="admin", password=generate_password_hash("admin123"), is_admin=True))
+
+        admin = User(
+            username="admin",
+            password_hash=generate_password_hash("admin123"),
+            role="admin"
+        )
+
+        db.session.add(admin)
         db.session.commit()
+
+# --------------------
+# Error handlers
+# --------------------
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template("403.html"), 403
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("404.html"), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("500.html"), 500
 
 # --------------------
 # Run
@@ -297,4 +504,5 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         create_admin_if_missing()
-    app.run(debug=True)
+
+    app.run(debug=False)

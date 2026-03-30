@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card">
+
+  <h2>Add User</h2>
+
+  <form method="POST">
+
+    <div class="form-row">
+      <div>
+        <label>Username</label>
+        <input type="text" name="username" required>
+      </div>
+
+      <div>
+        <label>Password</label>
+        <input type="password" name="password" required>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Role</label>
+        <select name="role">
+          <option value="admin">Admin</option>
+          <option value="editor">Editor</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; display:flex; gap:10px;">
+      <button type="submit" class="primary-btn">
+        Create User
+      </button>
+
+      <a href="/admin" class="secondary-btn">
+        Cancel
+      </a>
+    </div>
+
+  </form>
+
+</div>
+
+{% endblock %}

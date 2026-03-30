@@ -2,49 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Inventory Dashboard</title>
+    <title>{% block title %}Inventory Dashboard{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
 <body>
 
 <header class="header">
     <div class="nav-left">
-        <img
-            src="{{ url_for('static', filename='logo.png') }}"
-            class="logo-img"
-            alt="App logo"
-        >
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo-img">
     </div>
 
     <div class="nav-right">
         <nav class="nav-links">
             {% if current_user.is_authenticated %}
-                <a href="/" class="nav-link">Inventory</a>
-                <a href="/summary" class="nav-link">Summary</a>
+                <a href="{{ url_for('index') }}" class="nav-link">Inventory</a>
+                <a href="{{ url_for('summary') }}" class="nav-link">Summary</a>
 
                 {% if current_user.is_admin %}
-                    <a href="/admin" class="nav-link">Admin</a>
+                    <a href="{{ url_for('admin') }}" class="nav-link">Admin</a>
                 {% endif %}
 
-                <a href="/logout" class="nav-link">Logout</a>
+                <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+
+                <button id="darkToggle" class="secondary-btn">
+                  Dark Mode
+                </button>
+
             {% else %}
-                <a href="/login" class="nav-link">Login</a>
+                <a href="{{ url_for('login') }}" class="nav-link">Login</a>
             {% endif %}
         </nav>
-
-        <button id="darkToggle" class="dark-toggle">
-            Dark Mode
-        </button>
     </div>
 </header>
 
 <main class="page">
-    {% block content %}{% endblock %}
+
+<div class="flash-container">
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
 </main>
 
+<!-- SCRIPTS -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 <script src="{{ url_for('static', filename='app.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

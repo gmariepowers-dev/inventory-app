@@ -2,15 +2,15 @@
 
 {% block content %}
 
-<h2>Label Preview</h2>
+<div class="card">
 
-<div class="label-container">
+  <h2>Label Preview</h2>
 
   <div class="label-card">
 
     {% if item.barcode_path %}
       <img 
-        src="{{ url_for('static', filename=item.barcode_path.replace('static/','')) }}" 
+        src="{{ item.barcode_path }}" 
         alt="Barcode for {{ item.name }}"
       >
     {% endif %}
@@ -32,18 +32,17 @@
 
   </div>
 
-</div>
+  <div style="margin-top:20px; display:flex; gap:10px;">
 
+    <a href="{{ url_for('index') }}" class="secondary-btn">
+      Back to Inventory
+    </a>
 
-<div class="label-actions">
+    <button onclick="window.print()" class="primary-btn">
+      Export / Print Label
+    </button>
 
-  <a href="{{ url_for('index') }}" class="secondary-btn">
-    Back to Inventory
-  </a>
-
-  <button onclick="window.print()" class="primary-btn">
-    Export / Print Label
-  </button>
+  </div>
 
 </div>
 

@@ -7,14 +7,16 @@ db = SQLAlchemy()
 # --------------------
 # User
 # --------------------
-class User(db.Model, UserMixin):
+class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
 
-    is_admin = db.Column(db.Boolean, default=False)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+
+    role = db.Column(db.String(20), default="viewer")
+    # roles: admin, editor, viewer
 
     audit_logs = db.relationship(
         "AuditLog",
@@ -22,12 +24,13 @@ class User(db.Model, UserMixin):
         cascade="all, delete-orphan",
     )
 
-    # Flask-Login expects this attribute
     @property
     def is_active(self):
         return True
-
-
+    
+    @property
+    def is_admin(self):
+        return self.role == "admin"
 # --------------------
 # Item
 # --------------------
@@ -46,14 +49,13 @@ class Item(db.Model):
     colorways = db.Column(db.String(200))
     manufacturer = db.Column(db.String(200))
 
-    cost_price = db.Column(db.Float)
-    retail_price = db.Column(db.Float)
+    cost_price = db.Column(db.Float, default=0)
+    retail_price = db.Column(db.Float, default=0)
 
     order_link = db.Column(db.String(300))
 
     barcode_path = db.Column(db.String(300))
     image_path = db.Column(db.String(300))
-
 
     def to_dict(self):
         return {
@@ -61,14 +63,19 @@ class Item(db.Model):
             "name": self.name,
             "sku": self.sku,
             "quantity": self.quantity,
-            "weight": self.weight,
+            "manufacturer": self.manufacturer,
             "dimensions": self.dimensions,
             "colorways": self.colorways,
-            "manufacturer": self.manufacturer,
+            "cost_price": self.cost_price,
+            "retail_price": self.retail_price,
+            "image_path": self.image_path,
+            "barcode_path": self.barcode_path,
             "order_link": self.order_link,
-            "image_url": self.image_path,
-            "barcode_url": self.barcode_path
+            "weight": self.weight
         }
+
+    def __repr__(self):
+        return f"<Item {self.name} ({self.sku})>"
 # --------------------
 # Audit Log
 # --------------------

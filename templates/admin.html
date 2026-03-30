@@ -1,46 +1,74 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="page-container">
+<div class="page">
 
   <h2>Admin Dashboard</h2>
-  <p class="muted">Manage users and review system activity.</p>
+  <p class="muted-text">Manage users and review system activity.</p>
 
-  <!-- USERS -->
+  <!-- USER MANAGEMENT -->
   <div class="card">
-    <h3>Users</h3>
 
-    <table class="summary-table">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Users</h2>
+      <a class="primary-btn" href="/admin/add-user">Add User</a>
+    </div>
+
+    <table class="table">
       <thead>
         <tr>
           <th>ID</th>
           <th>Username</th>
           <th>Role</th>
+          <th>Actions</th>
         </tr>
       </thead>
+
       <tbody>
         {% for user in users %}
         <tr>
+
           <td>{{ user.id }}</td>
           <td>{{ user.username }}</td>
+
           <td>
-            {% if user.is_admin %}
-              <span class="badge-log">Admin</span>
-            {% else %}
-              <span class="badge-muted">User</span>
-            {% endif %}
+            <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+              <select name="role">
+                <option value="admin" {% if user.role == "admin" %}selected{% endif %}>Admin</option>
+                <option value="editor" {% if user.role == "editor" %}selected{% endif %}>Editor</option>
+                <option value="viewer" {% if user.role == "viewer" %}selected{% endif %}>Viewer</option>
+              </select>
           </td>
+
+          <td>
+              <button type="submit" class="primary-btn">Save</button>
+            </form>
+
+            <form method="POST"
+                  action="{{ url_for('delete_user', user_id=user.id) }}"
+                  onsubmit="return confirm('Delete this user?')">
+
+              <button type="submit" class="secondary-btn">
+                Delete
+              </button>
+            </form>
+          </td>
+
         </tr>
         {% endfor %}
       </tbody>
     </table>
+
   </div>
 
   <!-- AUDIT LOGS -->
   <div class="card">
+
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3>Audit Logs</h3>
-      <a href="{{ url_for('view_audit_logs') }}" class="secondary-btn">Open Full Logs</a>
+      <a href="{{ url_for('view_audit_logs') }}" class="secondary-btn">
+        Open Full Logs
+      </a>
     </div>
 
     {% if logs %}
@@ -54,10 +82,11 @@
           <th>Details</th>
         </tr>
       </thead>
+
       <tbody>
         {% for log in logs[:10] %}
         <tr>
-          <td>{{ log.timestamp.strftime("%Y-%m-%d %H:%M") if log.timestamp else "" }}</td>
+          <td>{{ log.created_at.strftime("%Y-%m-%d %H:%M") if log.created_at else "" }}</td>
           <td>{{ log.actor.username if log.actor else "System" }}</td>
           <td>{{ log.action }}</td>
           <td>{{ log.target or "" }}</td>
@@ -67,8 +96,9 @@
       </tbody>
     </table>
     {% else %}
-      <p class="muted">No activity yet.</p>
+      <p class="muted-text">No activity yet.</p>
     {% endif %}
+
   </div>
 
 </div>

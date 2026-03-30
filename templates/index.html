@@ -2,308 +2,162 @@
 {% block content %}
 
 <button class="primary-btn" onclick="openScanner()">
-Scan Barcode
+  Scan Barcode
 </button>
 
 <div class="container">
 
-    <!-- ADD ITEM -->
-    <div class="card add-item-card">
-        <h2>Add New Item</h2>
+  <!-- ADD ITEM -->
+  <div class="card">
+    <h2>Add New Item</h2>
 
-        <form method="POST" action="{{ url_for('index') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('index') }}" enctype="multipart/form-data">
 
-            <div class="form-row">
-                <input type="text" name="name" placeholder="Item Name" required>
-                <input type="text" name="sku" placeholder="SKU">
-            </div>
+      <div class="form-row">
+        <input type="text" name="name" placeholder="Item Name" required>
+        <input type="text" name="sku" placeholder="SKU">
+      </div>
 
-            <div class="form-row">
-                <input type="number" name="quantity" placeholder="Quantity">
-                <input type="text" name="dimensions" placeholder="Dimensions">
-            </div>
+      <div class="form-row">
+        <input type="number" name="quantity" placeholder="Quantity">
+        <input type="text" name="dimensions" placeholder="Dimensions">
+      </div>
 
-            <div class="form-row">
-                <input type="text" name="colorways" placeholder="Colorways">
-                <input type="text" name="manufacturer" placeholder="Manufacturer">
-            </div>
+      <div class="form-row">
+        <input type="text" name="colorways" placeholder="Colorways">
+        <input type="text" name="manufacturer" placeholder="Manufacturer">
+      </div>
 
-            <div class="form-row">
-                <input type="number" step="0.01" name="cost_price" placeholder="Our Price">
-                <input type="number" step="0.01" name="retail_price" placeholder="Retail Price">
-            </div>
+      <div class="form-row">
+        <input type="number" step="0.01" name="cost_price" placeholder="Our Price">
+        <input type="number" step="0.01" name="retail_price" placeholder="Retail Price">
+      </div>
 
-            <div class="form-row">
-                <input type="file" name="image">
-            </div>
+      <input type="file" name="image">
 
-            <button type="submit" class="primary-btn">Add Item</button>
-        </form>
-    </div>
+      <button type="submit" class="primary-btn">Add Item</button>
+    </form>
+  </div>
 
-    <!-- SEARCH -->
-    <div class="card">
-        <input
-            type="text"
-            id="searchInput"
-            placeholder="Search items..."
-            onkeyup="filterItems()"
-        >
-    </div>
+  <!-- SEARCH -->
+  <div class="card">
+    <input type="text" id="searchInput" placeholder="Search">
+  </div>
 
-   <!-- ITEM GRID -->
+  <!-- EMPTY STATE -->
+  {% if items|length == 0 %}
+    <p>No items yet. Add your first product above.</p>
+  {% endif %}
+
+  <!-- GRID -->
 <div class="item-grid">
-{% for item in items %}
+  {% for item in items %}
+  <div class="item-card" data-id="{{ item.id }}">
+    <h3>{{ item.name }}</h3>
+    <p>SKU: {{ item.sku }}</p>
 
-<div class="item-card" onclick="openItemModal({{ item.id }})">
-
-<h3>{{ item.name }}</h3>
-<p>SKU: {{ item.sku }}</p>
-<input
-type="number"
-value="{{ item.quantity }}"
-class="preview-qty"
-onclick="event.stopPropagation()"
-onchange="updatePreviewQty({{ item.id }}, this.value)"
->
-
+    <input
+      id="qty-{{ item.id }}"
+      type="number"
+      value="{{ item.quantity }}"
+      onclick="event.stopPropagation()"
+      onchange="updatePreviewQty({{ item.id }}, this.value)"
+    >
+  </div>
+  {% endfor %}
 </div>
 
-{% endfor %}
-</div>
-
-<!-- ITEM MODAL -->
-<div id="itemModal" class="modal" style="display:none;">
+<!-- MODAL -->
+<div id="itemModal" class="modal">
   <div class="modal-card">
 
     <button class="close-btn" onclick="closeItemModal()">✕</button>
 
-    <div class="modal-grid">
+    <div class="modal-content">
 
-      <!-- LEFT SIDE -->
+      <!-- LEFT SIDE: IMAGE + BARCODE -->
       <div class="modal-left">
-        <img id="modalImage" src="" alt="Item Image">
-        <img id="modalBarcode" src="" alt="Barcode">
+        <img id="modalImage" src="/static/placeholder.png" alt="Item Image" class="modal-img">
+        <img id="modalBarcode" alt="Barcode" class="modal-barcode">
       </div>
 
-      <!-- RIGHT SIDE -->
+      <!-- RIGHT SIDE: DETAILS + ACTIONS -->
       <div class="modal-right">
+        <h2 id="modalName">Loading...</h2>
+        <p id="modalSku"></p>
 
-        <h2 id="modalName"></h2>
-
-        <p><strong>SKU:</strong> <span id="modalSku"></span></p>
-
-        <p><strong>Manufacturer:</strong> <span id="modalManufacturer"></span></p>
-
-        <p><strong>Weight:</strong> <span id="modalWeight"></span></p>
-
-        <p><strong>Dimensions:</strong> <span id="modalDimensions"></span></p>
-
-        <p><strong>Colorways:</strong> <span id="modalColors"></span></p>
-
-        <div class="quantity-section">
-
-          <strong>Quantity</strong>
-
-          <div class="qty-controls">
-
-            <button onclick="adjustQty(-1)">−</button>
-
-            <input
-              type="number"
-              id="modalQtyInput"
-              min="0"
-              onchange="setQuantity()"
-            >
-
-            <button onclick="adjustQty(1)">+</button>
-
-          </div>
-
-        </div>
-
-        <div class="modal-actions">
-
-          <a id="orderLink" class="secondary-btn" target="_blank">
-            Order Item
-          </a>
-
-       <button
-            type="button"
-            class="primary-btn"
-            id="generateLabelBtn">
-            Export Label
-        </button>
-
-        </div>
-
+      <div class="field">
+        <label>Manufacturer</label>
+        <p id="viewManufacturer"></p>
+        <input id="modalManufacturer" class="edit-field" placeholder="Manufacturer">
       </div>
 
+      <div class="field">
+        <label>Dimensions</label>
+        <p id="viewDimensions"></p>
+        <input id="modalDimensions" class="edit-field" placeholder="Dimensions">
+      </div>
+
+      <div class="field">
+        <label>Colorways</label>
+        <p id="viewColors"></p>
+        <input id="modalColors" class="edit-field" placeholder="Colorways">
+      </div>
+
+      <div class="field">
+        <label>Cost Price</label>
+        <p id="viewCost"></p>
+        <input id="modalCost" type="number" class="edit-field" placeholder="Cost Price">
+      </div>
+
+      <div class="field">
+        <label>Retail Price</label>
+        <p id="viewRetail"></p>
+        <input id="modalRetail" type="number" class="edit-field" placeholder="Retail Price">
+      </div>
+
+      <div class="field">
+        <label>Quantity</label>
+        <p id="viewQty"></p>
+        <input id="modalQtyInput" type="number" class="edit-field" placeholder="Quantity">
+      </div>
     </div>
+
+  <div class="modal-actions">
+    <!-- Edit Mode Toggle -->
+    <button type="button" class="secondary-btn" onclick="toggleEditMode()">Edit</button>
+
+    <!-- Save Changes -->
+    <button type="button" class="primary-btn" onclick="saveItemChanges()">Save</button>
+
+    <!-- Quantity Adjust -->
+    <div class="qty-adjust">
+      <button type="button" class="secondary-btn" onclick="adjustQty(-1)">-</button>
+      <button type="button" class="secondary-btn" onclick="adjustQty(1)">+</button>
+    </div>
+
+    <!-- Delete Item -->
+    <form id="deleteForm" method="POST" style="display:inline;">
+      <button type="submit" class="secondary-btn">Delete</button>
+    </form>
+
+    <!-- Generate Label -->
+    <button type="button" class="secondary-btn" id="generateLabelBtn">Label</button>
   </div>
+
+      </div>
+    </div>
+  </div>s
 </div>
 
+<!-- SCANNER -->
 <div id="scannerModal" class="modal" style="display:none;">
-
   <div class="modal-card">
-
     <button class="close-btn" onclick="closeScanner()">✕</button>
 
-    <h2>Scan Barcode</h2>
-
-    <div id="scanner" style="width:400px;"></div>
+    <h2>Scan Item Barcode</h2>
+    <p class="muted-text">Align barcode inside the frame</p>
 
   </div>
-
 </div>
-
-<script>
-
-let currentItemId = null
-
-
-function openItemModal(id){
-
-fetch(`/item/${id}`)
-.then(res=>res.json())
-.then(data=>{
-
-currentItemId=data.id
-
-document.getElementById("itemModal").style.display="flex"
-
-document.getElementById("modalName").innerText=data.name
-document.getElementById("modalSku").innerText=data.sku
-document.getElementById("modalManufacturer").innerText=data.manufacturer
-document.getElementById("modalWeight").innerText=data.weight
-document.getElementById("modalDimensions").innerText=data.dimensions
-document.getElementById("modalColors").innerText=data.colorways
-
-document.getElementById("modalQtyInput").value=data.quantity
-
-document.getElementById("modalImage").src=data.image_url
-document.getElementById("modalBarcode").src=data.barcode_url
-
-document.getElementById("orderLink").href=data.order_link
-
-document.getElementById("generateLabelBtn").onclick=function(){
-window.location.href=`/generate-label/${data.id}`
-}
-
-})
-
-}
-
-
-function adjustQty(change){
-
-fetch(`/adjust-quantity/${currentItemId}`,{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({change:change})
-})
-.then(res=>res.json())
-.then(data=>{
-document.getElementById("modalQtyInput").value=data.new_quantity
-})
-
-}
-
-
-function setQuantity(){
-
-let newQty=document.getElementById("modalQtyInput").value
-
-fetch(`/set-quantity/${currentItemId}`,{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({quantity:newQty})
-})
-
-}
-
-
-function updatePreviewQty(id,qty){
-
-fetch(`/set-quantity/${id}`,{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({quantity:qty})
-})
-
-}
-
-
-function closeItemModal(){
-document.getElementById("itemModal").style.display="none"
-}
-
-let scanner
-let scanning = false
-
-function openScanner(){
-
-document.getElementById("scannerModal").style.display = "flex"
-
-scanner = new Html5Qrcode("scanner")
-
-scanner.start(
-{ facingMode: "environment" },
-{
-fps: 10,
-qrbox: { width: 300, height: 150 }
-},
-barcode => {
-
-if(scanning) return
-scanning = true
-
-console.log("Scanned:", barcode)
-
-searchItem(barcode)
-
-scanner.stop()
-closeScanner()
-
-}
-
-)
-
-}
-
-function closeScanner(){
-
-document.getElementById("scannerModal").style.display="none"
-
-if(scanner){
-scanner.stop()
-}
-
-}
-function searchItem(barcode){
-
-fetch(`/scan/${barcode}`)
-.then(res=>res.json())
-.then(data=>{
-
-if(data.found){
-
-openItemModal(data.id)
-
-}else{
-
-alert("Item not found for barcode: " + barcode)
-
-}
-
-})
-
-}
-</script>
 {% endblock %}

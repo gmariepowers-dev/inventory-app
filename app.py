@@ -86,7 +86,6 @@ def log_audit(action, target=None, details=None):
 def login():
     if request.method == "POST":
         user = User.query.filter_by(username=request.form["username"]).first()
-
         if user and check_password_hash(user.password_hash, request.form["password"]):
             login_user(user)
             log_audit("login", target=user.username)
@@ -340,6 +339,8 @@ def create_user():
 
     return redirect(url_for("admin"))
 
+from werkzeug.security import generate_password_hash
+
 @app.route("/admin/add-user", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -363,16 +364,31 @@ def add_user():
 
     return render_template("add_user.html")
 
+@app.route("/admin/users/edit/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def edit_user(user_id):
+
+    user = User.query.get_or_404(user_id)
+
+    # Prevent deleting/changing yourself dangerously later if you want
+    new_role = request.form["role"]
+    user.role = new_role
+
+    db.session.commit()
+
+    log_audit("edit_user", target=user.username, details=f"role -> {new_role}")
+
+    flash("User updated", "success")
+    return redirect(url_for("admin"))
+
+
 @app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
 @login_required
 @admin_required
 def delete_user(user_id):
 
     user = User.query.get_or_404(user_id)
-
-    if user.id == current_user.id:
-        flash("You cannot delete yourself", "error")
-        return redirect(url_for("admin"))
 
     if user.username == "admin":
         flash("Cannot delete main admin", "error")
@@ -384,27 +400,6 @@ def delete_user(user_id):
     log_audit("delete_user", target=user.username)
 
     flash("User deleted", "success")
-    return redirect(url_for("admin"))
-
-@app.route("/admin/users/edit/<int:user_id>", methods=["POST"])
-@login_required
-@admin_required
-def edit_user(user_id):
-
-    user = User.query.get_or_404(user_id)
-
-    if user.id == current_user.id:
-        flash("You cannot change your own role", "error")
-        return redirect(url_for("admin"))
-
-    new_role = request.form["role"]
-    user.role = new_role
-
-    db.session.commit()
-
-    log_audit("edit_user", target=user.username, details=f"role -> {new_role}")
-
-    flash("User updated", "success")
     return redirect(url_for("admin"))
 
 # --------------------
@@ -482,20 +477,6 @@ def create_admin_if_missing():
         db.session.add(admin)
         db.session.commit()
 
-# --------------------
-# Error handlers
-# --------------------
-@app.errorhandler(403)
-def forbidden(e):
-    return render_template("403.html"), 403
-
-@app.errorhandler(404)
-def not_found(e):
-    return render_template("404.html"), 404
-
-@app.errorhandler(500)
-def server_error(e):
-    return render_template("500.html"), 500
 
 # --------------------
 # Run
@@ -505,4 +486,4 @@ if __name__ == "__main__":
         db.create_all()
         create_admin_if_missing()
 
-    app.run(debug=False)
+    app.run(debug=True)

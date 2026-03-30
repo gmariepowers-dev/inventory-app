@@ -5,37 +5,39 @@
 {% block content %}
 
 <div class="page-header">
-  <h1>Manage Users</h1>
 
-  <a class="primary-btn" href="{{ url_for('add_user') }}">
-    Add User
-  </a>
-</div>
+<h1>Manage Users</h1>
 
-<div class="card">
-
-  <table class="table">
-
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Role</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td>{{ user.id }}</td>
-        <td>{{ user.username }}</td>
-        <td>{{ user.role }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-
-  </table>
+<a class="btn-primary" href="/admin/add-user">
+Add User
+</a>
 
 </div>
+
+<table class="table">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Username</th>
+<th>Role</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for user in users %}
+
+<tr>
+<td>{{ user.id }}</td>
+<td>{{ user.username }}</td>
+<td>{{ user.role }}</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
 
 {% endblock %}

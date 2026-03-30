@@ -72,6 +72,9 @@ function openItemModal(id) {
       document.getElementById("viewManufacturer").innerText = data.manufacturer || "";
       document.getElementById("viewDimensions").innerText = data.dimensions || "";
       document.getElementById("viewColors").innerText = data.colorways || "";
+      document.getElementById("viewCost").innerText = data.cost_price || ""
+      document.getElementById("viewRetail").innerText = data.retail_price || ""
+      document.getElementById("viewQty").innerText = data.quantity || 0
 
       // IMAGE AND BARCODE
       document.getElementById("modalImage").src = data.image_path || "/static/placeholder.png";
@@ -143,7 +146,15 @@ function toggleEditMode() {
     input.style.display = input.style.display === "block" ? "none" : "block";
   });
 
-  const viewFields = ["viewManufacturer","viewDimensions","viewColors"];
+  const viewFields = [
+      "viewManufacturer",
+      "viewDimensions",
+      "viewColors",
+      "viewCost",
+      "viewRetail",
+      "viewQty"
+  ];
+
   viewFields.forEach(id => {
     const p = document.getElementById(id);
     p.style.display = p.style.display === "none" ? "block" : "none";

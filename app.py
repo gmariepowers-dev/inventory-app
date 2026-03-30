@@ -4,6 +4,8 @@ import os,time, shutil, csv
 import time
 import shutil
 import csv
+from flask_sqlalchemy import SQLAlchemy
+
 
 from functools import wraps
 from barcode import Code128
@@ -86,6 +88,7 @@ def log_audit(action, target=None, details=None):
 def login():
     if request.method == "POST":
         user = User.query.filter_by(username=request.form["username"]).first()
+
         if user and check_password_hash(user.password_hash, request.form["password"]):
             login_user(user)
             log_audit("login", target=user.username)
@@ -268,9 +271,11 @@ def summary():
     total_items = len(items)
     total_quantity = sum(item.quantity or 0 for item in items)
     total_value = sum((item.quantity or 0) * (item.cost_price or 0) for item in items)
-
+    
     labels = [item.name for item in items]
     quantities = [item.quantity or 0 for item in items]
+    values = [(item.quantity or 0) * (item.cost_price or 0) for item in items]
+
 
     return render_template(
         "summary.html",
@@ -279,7 +284,8 @@ def summary():
         total_value=total_value,
         items=items,
         labels=labels,
-        quantities=quantities
+        quantities=quantities,
+        values=values
     )
 
 # --------------------
@@ -339,8 +345,6 @@ def create_user():
 
     return redirect(url_for("admin"))
 
-from werkzeug.security import generate_password_hash
-
 @app.route("/admin/add-user", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -389,6 +393,7 @@ def edit_user(user_id):
 def delete_user(user_id):
 
     user = User.query.get_or_404(user_id)
+
 
     if user.username == "admin":
         flash("Cannot delete main admin", "error")
@@ -486,4 +491,4 @@ if __name__ == "__main__":
         db.create_all()
         create_admin_if_missing()
 
-    app.run(debug=True)
+    app.run(debug=False)

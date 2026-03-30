@@ -2,3 +2,5 @@ Flask
 python-barcode
 Pillow
 gunicorn
+flask-login
+flask-sqlalchemy

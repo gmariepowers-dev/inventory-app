@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 
-<button class="primary-btn" onclick="openScanner()">
-  Scan Barcode
-</button>
+<div class="page-header">
+  <h2>Inventory</h2>
 
+</div>
 <div class="container">
 
   <!-- ADD ITEM -->
@@ -33,7 +33,10 @@
         <input type="number" step="0.01" name="retail_price" placeholder="Retail Price">
       </div>
 
-      <input type="file" name="image">
+      <div class="form-row">
+        <input type="file" name="image">
+        <input type="text" name="weight" placeholder="Weight">
+      </div>
 
       <button type="submit" class="primary-btn">Add Item</button>
     </form>
@@ -105,6 +108,12 @@
       </div>
 
       <div class="field">
+        <label>Weight</label>
+        <p id="viewWeight"></p>
+        <input id="modalWeight" class="edit-field" placeholder="Weight">
+      </div>
+
+      <div class="field">
         <label>Cost Price</label>
         <p id="viewCost"></p>
         <input id="modalCost" type="number" class="edit-field" placeholder="Cost Price">
@@ -116,25 +125,30 @@
         <input id="modalRetail" type="number" class="edit-field" placeholder="Retail Price">
       </div>
 
-      <div class="field">
+      <div class="field quantity-field">
         <label>Quantity</label>
-        <p id="viewQty"></p>
-        <input id="modalQtyInput" type="number" class="edit-field" placeholder="Quantity">
+
+        <div class="quantity-row">
+          <div id="viewQty"></div>
+
+          <div class="quantity-controls">
+            <div class="qty-btn" onclick="adjustQty(-1)">−</div>
+            <input id="modalQtyInput" class="edit-field">
+            <div class="qty-btn" onclick="adjustQty(1)">+</div>
+          </div>
+        </div>
       </div>
-    </div>
 
   <div class="modal-actions">
     <!-- Edit Mode Toggle -->
-    <button type="button" class="secondary-btn" onclick="toggleEditMode()">Edit</button>
+    <button id="editBtn" class="secondary-btn" onclick="toggleEditMode()">
+      Edit
+    </button>
 
     <!-- Save Changes -->
-    <button type="button" class="primary-btn" onclick="saveItemChanges()">Save</button>
-
-    <!-- Quantity Adjust -->
-    <div class="qty-adjust">
-      <button type="button" class="secondary-btn" onclick="adjustQty(-1)">-</button>
-      <button type="button" class="secondary-btn" onclick="adjustQty(1)">+</button>
-    </div>
+    <button id="saveBtn" class="primary-btn" style="display:none;" onclick="saveItemChanges()">
+      Save
+    </button>
 
     <!-- Delete Item -->
     <form id="deleteForm" method="POST" style="display:inline;">
@@ -157,6 +171,7 @@
 
     <h2>Scan Item Barcode</h2>
     <p class="muted-text">Align barcode inside the frame</p>
+    <div id="scanner"></div>
 
   </div>
 </div>

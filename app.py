@@ -135,13 +135,14 @@ def index():
         if Item.query.filter_by(sku=sku).first():
             flash("SKU already exists", "error")
             return redirect(url_for("index"))
-
+        
         # Quantity validation
         qty = int(request.form.get("quantity") or 0)
 
         if qty < 0:
             flash("Quantity cannot be negative", "error")
             return redirect(url_for("index"))
+        
 
         # Barcode 
         barcode_dir = os.path.join(app.static_folder, "barcodes")
@@ -173,6 +174,7 @@ def index():
             sku=sku,
             quantity=qty,
             dimensions=request.form.get("dimensions"),
+            weight=request.form.get("weight"),
             colorways=request.form.get("colorways"),
             manufacturer=request.form.get("manufacturer"),
             cost_price=float(request.form.get("cost_price") or 0),
@@ -211,6 +213,7 @@ def edit_item(item_id):
     item.colorways = data.get("colorways")
     item.cost_price = float(data.get("cost_price") or 0)
     item.retail_price = float(data.get("retail_price") or 0)
+    item.weight = data.get("weight")
 
     db.session.commit()
     log_audit("edit_item", target=item.sku)
@@ -491,4 +494,4 @@ if __name__ == "__main__":
         db.create_all()
         create_admin_if_missing()
 
-    app.run(debug=False)
+    app.run(debug=True)

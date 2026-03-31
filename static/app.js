@@ -1,108 +1,154 @@
-// ===== GLOBAL =====
-window.currentItemId = window.currentItemId || null;
+let html5QrCode = null;
+window.currentItemId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM READY");
 
-  // ===== DARK MODE TOGGLE =====
-  const btn = document.getElementById("darkToggle");
-  if (btn) {
-    if (localStorage.theme === "dark") {
-      document.body.classList.add("dark");
-      btn.textContent = "Light Mode";
-    } else {
-      btn.textContent = "Dark Mode";
-    }
-
-    btn.addEventListener("click", () => {
-      const isDark = document.body.classList.toggle("dark");
-      localStorage.theme = isDark ? "dark" : "light";
-      btn.textContent = isDark ? "Light Mode" : "Dark Mode";
+  // SEARCH
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.toLowerCase();
+      document.querySelectorAll(".item-card").forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(query) ? "flex" : "none";
+      });
     });
   }
 
-  // ===== HIGHLIGHT ACTIVE NAV LINK =====
-  document.querySelectorAll(".nav-link").forEach(link => {
-    if (window.location.pathname === new URL(link.href).pathname) {
-      link.classList.add("active");
-    }
-  });
-
-  // ===== ITEM CARD CLICK HANDLER =====
-  const cards = document.querySelectorAll(".item-card");
-  console.log("FOUND CARDS:", cards.length);
-
-  cards.forEach(card => {
+  // ITEM CLICK
+  document.querySelectorAll(".item-card").forEach(card => {
     card.addEventListener("click", () => {
       const id = card.dataset.id;
-      console.log("CLICKED CARD:", id);
       if (id) openItemModal(id);
-      else console.error("Card has no data-id!");
     });
   });
+
 });
 
-// ===== OPEN MODAL AND FETCH ITEM =====
 function openItemModal(id) {
   window.currentItemId = id;
 
   const modal = document.getElementById("itemModal");
-  if (!modal) return console.error("Modal not found");
-
   modal.style.display = "flex";
-  document.getElementById("modalName").innerText = "Loading...";
-  document.getElementById("modalSku").innerText = "";
-  document.getElementById("modalImage").src = "/static/placeholder.png";
-  document.getElementById("modalBarcode").src = "";
 
   fetch(`/item/${id}`)
     .then(res => res.json())
     .then(data => {
-      document.getElementById("modalName").innerText = data.name || "Unnamed Item";
-      document.getElementById("modalSku").innerText = data.sku || "N/A";
 
-      document.getElementById("modalManufacturer").value = data.manufacturer || "";
-      document.getElementById("modalDimensions").value = data.dimensions || "";
-      document.getElementById("modalColors").value = data.colorways || "";
+      // SAFE FIELD SETTING (prevents crashes)
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = value || "";
+      };
 
-      document.getElementById("modalCost").value = data.cost_price || "";
-      document.getElementById("modalRetail").value = data.retail_price || "";
-      document.getElementById("modalQtyInput").value = data.quantity || 0;
+      const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value || "";
+      };
 
-      document.getElementById("viewManufacturer").innerText = data.manufacturer || "";
-      document.getElementById("viewDimensions").innerText = data.dimensions || "";
-      document.getElementById("viewColors").innerText = data.colorways || "";
-      document.getElementById("viewCost").innerText = data.cost_price || ""
-      document.getElementById("viewRetail").innerText = data.retail_price || ""
-      document.getElementById("viewQty").innerText = data.quantity || 0
+      setText("modalName", data.name);
+      setText("modalSku", data.sku);
+      setText("viewManufacturer", data.manufacturer);
+      setText("viewDimensions", data.dimensions);
+      setText("viewColors", data.colorways);
+      setText("viewCost", data.cost_price);
+      setText("viewRetail", data.retail_price);
+      setText("viewQty", data.quantity);
+      setText("viewWeight", data.weight);
 
-      // IMAGE AND BARCODE
+      setValue("modalManufacturer", data.manufacturer);
+      setValue("modalDimensions", data.dimensions);
+      setValue("modalColors", data.colorways);
+      setValue("modalCost", data.cost_price);
+      setValue("modalRetail", data.retail_price);
+      setValue("modalQtyInput", data.quantity);
+      setValue("modalWeight", data.weight);
+
+      // IMAGE + BARCODE SAFE
       document.getElementById("modalImage").src = data.image_path || "/static/placeholder.png";
       document.getElementById("modalBarcode").src = data.barcode_path || "";
 
-      // DELETE FORM
-      const deleteForm = document.getElementById("deleteForm");
-      if (deleteForm) deleteForm.action = `/delete-item/${data.id}`;
+      document.addEventListener("input", (e) => {
+        if (e.target.id === "modalQtyInput") {
+          const val = e.target.value;
+          document.getElementById("viewQty").innerText = val;
+        }
+      });
 
-      // LABEL BUTTON
+ // label button FIX
       const labelBtn = document.getElementById("generateLabelBtn");
-      if (labelBtn) labelBtn.onclick = () => window.location.href = `/generate-label/${data.id}`;
-    })
-    .catch(err => {
-      console.error("Failed to load item:", err);
-      alert("Error loading item. Check console for details.");
+      if (labelBtn) {
+        labelBtn.onclick = () => {
+          window.location.href = `/generate-label/${data.id}`;
+        };
+      }
+
+      resetEditMode();
     });
 }
 
-// ===== CLOSE MODAL =====
 function closeItemModal() {
-  const modal = document.getElementById("itemModal");
-  if (modal) modal.style.display = "none";
+  document.getElementById("itemModal").style.display = "none";
 }
 
-// ===== QUANTITY ADJUST =====
-window.adjustQty = function(change) {
+function toggleEditMode() {
+  const editing = document.body.classList.toggle("editing");
+
+  document.querySelectorAll(".edit-field").forEach(el => {
+    el.style.display = editing ? "block" : "none";
+  });
+
+  document.querySelectorAll(".field p").forEach(el => {
+    el.style.display = editing ? "none" : "block";
+  });
+
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) saveBtn.style.display = editing ? "inline-block" : "none";
+}
+
+function resetEditMode() {
+  document.body.classList.remove("editing");
+
+  document.querySelectorAll(".edit-field").forEach(el => {
+    el.style.display = "none";
+  });
+
+  document.querySelectorAll(".field p").forEach(el => {
+    el.style.display = "block";
+  });
+
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) saveBtn.style.display = "none";
+}
+
+function saveItemChanges() {
   if (!window.currentItemId) return;
+
+  fetch(`/edit-item/${window.currentItemId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      manufacturer: modalManufacturer.value,
+      dimensions: modalDimensions.value,
+      colorways: modalColors.value,
+      cost_price: modalCost.value,
+      retail_price: modalRetail.value,
+      weight: modalWeight.value
+    })
+  })
+  .then(() => {
+    // 🔥 UPDATE UI AFTER SAVE
+    viewManufacturer.innerText = modalManufacturer.value;
+    viewDimensions.innerText = modalDimensions.value;
+    viewColors.innerText = modalColors.value;
+    viewCost.innerText = modalCost.value;
+    viewRetail.innerText = modalRetail.value;
+    viewWeight.innerText = modalWeight.value;
+
+    resetEditMode();
+  });
+}
+
+function adjustQty(change) {
   fetch(`/adjust-quantity/${window.currentItemId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -110,53 +156,29 @@ window.adjustQty = function(change) {
   })
   .then(res => res.json())
   .then(data => {
-    const input = document.getElementById("modalQtyInput");
-    if (input) input.value = data.new_quantity;
+    viewQty.innerText = data.new_quantity;
+    modalQtyInput.value = data.new_quantity;
   });
 }
 
-// ===== SAVE ITEM CHANGES =====
-function saveItemChanges() {
-  if (!window.currentItemId) return;
-  fetch(`/edit-item/${window.currentItemId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      manufacturer: document.getElementById("modalManufacturer").value,
-      dimensions: document.getElementById("modalDimensions").value,
-      colorways: document.getElementById("modalColors").value,
-      cost_price: document.getElementById("modalCost").value,
-      retail_price: document.getElementById("modalRetail").value
-    })
-  })
-  .then(() => closeItemModal());
-}
-
-// ===== SCANNER MODAL =====
 function openScanner() {
-  document.getElementById("scannerModal").style.display = "flex";
+  const modal = document.getElementById("scannerModal");
+  modal.style.display = "flex";
+
+  setTimeout(() => {
+    html5QrCode = new Html5Qrcode("scanner");
+
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      (text) => {
+        window.location.href = `/scan/${text}`;
+      }
+    );
+  }, 500);
 }
 
 function closeScanner() {
   document.getElementById("scannerModal").style.display = "none";
-}
-function toggleEditMode() {
-  const fields = document.querySelectorAll(".edit-field");
-  fields.forEach(input => {
-    input.style.display = input.style.display === "block" ? "none" : "block";
-  });
-
-  const viewFields = [
-      "viewManufacturer",
-      "viewDimensions",
-      "viewColors",
-      "viewCost",
-      "viewRetail",
-      "viewQty"
-  ];
-
-  viewFields.forEach(id => {
-    const p = document.getElementById(id);
-    p.style.display = p.style.display === "none" ? "block" : "none";
-  });
+  if (html5QrCode) html5QrCode.stop().catch(() => {});
 }

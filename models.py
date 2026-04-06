@@ -31,6 +31,7 @@ class User(UserMixin, db.Model):
     @property
     def is_admin(self):
         return self.role == "admin"
+    
 # --------------------
 # Item
 # --------------------
@@ -59,20 +60,25 @@ class Item(db.Model):
     image_path = db.Column(db.String(300))
 
     def to_dict(self):
+        quantity = self.quantity or 0
+        retail_price = self.retail_price or 0
+
         return {
             "id": self.id,
             "name": self.name,
             "sku": self.sku,
-            "quantity": self.quantity,
+            "quantity": quantity,
             "manufacturer": self.manufacturer,
             "dimensions": self.dimensions,
             "colorways": self.colorways,
             "cost_price": self.cost_price,
-            "retail_price": self.retail_price,
+            "retail_price": retail_price,
             "image_path": self.image_path,
             "barcode_path": self.barcode_path,
             "order_link": self.order_link,
-            "weight": self.weight
+            "weight": self.weight,
+            "low_stock_threshold": self.low_stock_threshold,
+            "total_retail_value": quantity * retail_price
         }
 
     def __repr__(self):

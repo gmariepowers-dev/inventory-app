@@ -2,8 +2,12 @@
 
 {% block content %}
 
-<div class="summary-page">
-<h2>Inventory Summary</h2>
+<div class="page-header">
+  <h2>Inventory Summary</h2>
+  <a href="{{ url_for('export_inventory') }}" class="primary-btn">
+    Export Inventory
+  </a>
+</div>
 
 <div class="summary-grid summary-stats">
   <div class="summary-card stat-card">
@@ -93,6 +97,12 @@
   {% else %}
     <p class="muted-text">No low stock items.</p>
   {% endif %}
+</div>
+
+<div class="action-row" style="margin-bottom: 20px;">
+  <a href="{{ url_for('export_inventory') }}" class="primary-btn">
+    Export Inventory
+  </a>
 </div>
 
 <!-- CHART JS -->

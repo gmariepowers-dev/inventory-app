@@ -6,6 +6,11 @@ import shutil
 import csv
 from flask_sqlalchemy import SQLAlchemy
 
+from io import BytesIO
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+from openpyxl.utils import get_column_letter
+
 
 from functools import wraps
 from barcode import Code128
@@ -317,6 +322,136 @@ def summary():
         low_stock_items=low_stock_items,
         low_stock_threshold=low_stock_threshold
     )
+@app.route("/summary/export")
+@login_required
+def export_inventory():
+    items = Item.query.all()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Inventory Summary"
+
+    # Styles
+    header_fill = PatternFill("solid", fgColor="2B51A3")
+    header_font = Font(color="FFFFFF", bold=True)
+    subheader_fill = PatternFill("solid", fgColor="EAF0FB")
+    bold_font = Font(bold=True)
+    low_stock_fill = PatternFill("solid", fgColor="FEE2E2")
+    thin_gray = Side(style="thin", color="D1D5DB")
+
+    # Summary stats
+    total_items = len(items)
+    total_quantity = sum(item.quantity or 0 for item in items)
+    total_retail_value = sum((item.quantity or 0) * (item.retail_price or 0) for item in items)
+    total_cost_value = sum((item.quantity or 0) * (item.cost_price or 0) for item in items)
+
+    ws["A1"] = "Inventory Export"
+    ws["A1"].font = Font(bold=True, color="FFFFFF", size=14)
+    ws["A1"].fill = header_fill
+
+    ws.merge_cells("A1:H1")
+
+    ws["A3"] = "Total Items"
+    ws["B3"] = total_items
+
+    ws["A4"] = "Total Quantity"
+    ws["B4"] = total_quantity
+
+    ws["A5"] = "Total Retail Value"
+    ws["B5"] = total_retail_value
+
+    ws["A6"] = "Our Price Value"
+    ws["B6"] = total_cost_value
+
+    for cell in ["A3", "A4", "A5", "A6"]:
+        ws[cell].font = bold_font
+
+    ws["B5"].number_format = '$#,##0.00'
+    ws["B6"].number_format = '$#,##0.00'
+
+    # Table header
+    start_row = 8
+    headers = [
+        "Item Name",
+        "SKU",
+        "Quantity",
+        "Low Stock Threshold",
+        "Cost Price",
+        "Retail Price",
+        "Total Cost Value",
+        "Total Retail Value",
+        "Low Stock"
+    ]
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=start_row, column=col_num, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = Border(bottom=thin_gray)
+
+    # Data rows
+    for idx, item in enumerate(items, start=start_row + 1):
+        qty = item.quantity or 0
+        cost_price = item.cost_price or 0
+        retail_price = item.retail_price or 0
+        threshold = item.low_stock_threshold or 5
+        is_low_stock = qty <= threshold
+
+        row_values = [
+            item.name,
+            item.sku,
+            qty,
+            threshold,
+            cost_price,
+            retail_price,
+            qty * cost_price,
+            qty * retail_price,
+            "YES" if is_low_stock else "NO"
+        ]
+
+        for col_num, value in enumerate(row_values, 1):
+            cell = ws.cell(row=idx, column=col_num, value=value)
+            cell.alignment = Alignment(vertical="center")
+
+            if col_num in [5, 6, 7, 8]:
+                cell.number_format = '$#,##0.00'
+
+            if is_low_stock:
+                cell.fill = low_stock_fill
+
+    # Column widths
+    widths = {
+        "A": 24,
+        "B": 18,
+        "C": 12,
+        "D": 20,
+        "E": 14,
+        "F": 14,
+        "G": 18,
+        "H": 18,
+        "I": 12,
+    }
+
+    for col, width in widths.items():
+        ws.column_dimensions[col].width = width
+
+    # Freeze header row
+    ws.freeze_panes = "A9"
+
+    # Export
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return Response(
+        output.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": "attachment; filename=inventory_export.xlsx"
+        }
+    )
+
 # --------------------
 # Labels
 # --------------------
@@ -462,6 +597,24 @@ def export_audit_logs():
 
     return Response(generate(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment;filename=audit_logs.csv"})
+
+@app.route("/admin/users/reset-password/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def reset_user_password(user_id):
+    user = User.query.get_or_404(user_id)
+    new_password = request.form.get("new_password", "").strip()
+
+    if len(new_password) < 8:
+        flash("Password must be at least 8 characters", "error")
+        return redirect(url_for("admin"))
+
+    user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+
+    log_audit("reset_password", target=user.username)
+    flash(f"Password reset for {user.username}", "success")
+    return redirect(url_for("admin"))
 
 # --------------------
 # Backup

@@ -32,10 +32,14 @@
         <input type="number" step="0.01" name="cost_price" placeholder="Our Price">
         <input type="number" step="0.01" name="retail_price" placeholder="Retail Price">
       </div>
+      
+      <div class="form-row">
+        <input type="number" name="low_stock_threshold" placeholder="Low Stock Threshold (default 5)">
+        <input type="text" name="weight" placeholder="Weight">
+      </div>
 
       <div class="form-row">
         <input type="file" name="image">
-        <input type="text" name="weight" placeholder="Weight">
       </div>
 
       <button type="submit" class="primary-btn">Add Item</button>
@@ -128,16 +132,13 @@
       <div class="field quantity-field">
         <label>Quantity</label>
 
-        <div class="quantity-row">
-          <div id="viewQty"></div>
-
-          <div class="quantity-controls">
-            <div class="qty-btn" onclick="adjustQty(-1)">−</div>
-            <input id="modalQtyInput" class="edit-field">
-            <div class="qty-btn" onclick="adjustQty(1)">+</div>
-          </div>
-        </div>
+        <div class="quantity-controls">
+        <button type="button" class="qty-btn" onclick="adjustQty(-1)">−</button>
+        <div id="viewQty">92</div>
+        <input id="modalQtyInput" class="edit-field" type="number">
+        <button type="button" class="qty-btn" onclick="adjustQty(1)">+</button>
       </div>
+    </div>
 
   <div class="modal-actions">
     <!-- Edit Mode Toggle -->

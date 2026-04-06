@@ -2,27 +2,25 @@
 
 {% block content %}
 
-<h2>Add User</h2>
+<div class="card form-card">
+  <h2>Add User</h2>
 
-<form method="POST">
+  <form method="POST" class="stack-form">
+    <label>Username</label>
+    <input type="text" name="username" required>
 
-<label>Username</label>
-<input type="text" name="username" required>
+    <label>Password</label>
+    <input type="password" name="password" required>
 
-<label>Password</label>
-<input type="password" name="password" required>
+    <label>Role</label>
+    <select name="role">
+      <option value="admin">Admin</option>
+      <option value="editor">Editor</option>
+      <option value="viewer">Viewer</option>
+    </select>
 
-<label>Role</label>
-<select name="role">
-<option value="admin">Admin</option>
-<option value="editor">Editor</option>
-<option value="viewer">Viewer</option>
-</select>
-
-<button type="submit" class="primary-btn">
-Create User
-</button>
-
-</form>
+    <button type="submit" class="primary-btn">Create User</button>
+  </form>
+</div>
 
 {% endblock %}

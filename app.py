@@ -138,10 +138,12 @@ def index():
         
         # Quantity validation
         qty = int(request.form.get("quantity") or 0)
+        threshold = int(request.form.get("low_stock_threshold") or 5)
 
         if qty < 0:
             flash("Quantity cannot be negative", "error")
             return redirect(url_for("index"))
+        
         
 
         # Barcode 
@@ -173,6 +175,7 @@ def index():
             name=request.form["name"],
             sku=sku,
             quantity=qty,
+            low_stock_threshold=threshold,  
             dimensions=request.form.get("dimensions"),
             weight=request.form.get("weight"),
             colorways=request.form.get("colorways"),
@@ -271,26 +274,49 @@ def delete_item(item_id):
 def summary():
     items = Item.query.all()
 
+    low_stock_threshold = 5
+
     total_items = len(items)
-    total_quantity = sum(item.quantity or 0 for item in items)
-    total_value = sum((item.quantity or 0) * (item.cost_price or 0) for item in items)
-    
+    total_retail_value = sum((item.quantity or 0) * (item.retail_price or 0) for item in items)
+    total_cost_value = sum((item.quantity or 0) * (item.cost_price or 0) for item in items)
+
     labels = [item.name for item in items]
     quantities = [item.quantity or 0 for item in items]
     values = [(item.quantity or 0) * (item.cost_price or 0) for item in items]
 
+    item_values = []
+    for item in items:
+        qty = item.quantity or 0
+        cost_price = item.cost_price or 0
+        retail_price = item.retail_price or 0
+
+        item_values.append({
+            "name": item.name,
+            "sku": item.sku,
+            "quantity": qty,
+            "cost_price": cost_price,
+            "retail_price": retail_price,
+            "value": qty * cost_price,
+            "is_low_stock": qty <= (item.low_stock_threshold or 0)
+        })
+
+    low_stock_items = [
+    item for item in items
+    if (item.quantity or 0) <= (item.low_stock_threshold or 0)
+]
 
     return render_template(
         "summary.html",
         total_items=total_items,
-        total_quantity=total_quantity,
-        total_value=total_value,
-        items=items,
+        total_retail_value=total_retail_value,
+        total_cost_value=total_cost_value,
         labels=labels,
         quantities=quantities,
-        values=values
+        values=values,
+        item_values=item_values,
+        low_stock_items=low_stock_items,
+        low_stock_threshold=low_stock_threshold
     )
-
 # --------------------
 # Labels
 # --------------------

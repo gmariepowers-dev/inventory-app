@@ -2,50 +2,50 @@
 
 {% block content %}
 
+<div class="summary-page">
 <h2>Inventory Summary</h2>
 
-<!-- SUMMARY STATS -->
-<div class="summary-grid">
-
-  <div class="summary-card">
+<div class="summary-grid summary-stats">
+  <div class="summary-card stat-card">
     <h4>Total Items</h4>
     <p>{{ total_items }}</p>
   </div>
 
-  <div class="summary-card">
-    <h4>Total Quantity</h4>
-    <p>{{ total_quantity }}</p>
+  <div class="summary-card stat-card">
+    <h4>Total Retail Value</h4>
+    <p>${{ "%.2f"|format(total_retail_value or 0) }}</p>
   </div>
 
-  <div class="summary-card">
-    <h4>Total Inventory Value</h4>
-    <p>${{ "%.2f"|format(total_value or 0) }}</p>
+  <div class="summary-card stat-card">
+    <h4>Our Price Value</h4>
+    <p>${{ "%.2f"|format(total_cost_value or 0) }}</p>
   </div>
-
 </div>
 
-<!-- CHARTS -->
-<div class="card">
+
+  <!-- CHARTS -->
+  <div class="card summary-chart-section">
   <h3>Inventory Charts</h3>
 
   <div class="chart-grid">
-
     <div class="chart-card">
       <h4>Item Quantities</h4>
-      <canvas id="quantityChart"></canvas>
+      <div class="chart-wrap">
+        <canvas id="quantityChart"></canvas>
+      </div>
     </div>
 
     <div class="chart-card">
       <h4>Inventory Value</h4>
-      <canvas id="valueChart"></canvas>
+      <div class="chart-wrap">
+        <canvas id="valueChart"></canvas>
+      </div>
     </div>
-
   </div>
 </div>
 
-<!-- ITEM VALUES TABLE -->
-<div class="card">
-
+  <!-- ITEM VALUES TABLE -->
+  <div class="card">
   <h3>Item Values</h3>
 
   <table class="summary-table">
@@ -61,47 +61,49 @@
 
     <tbody>
       {% for item in item_values %}
-      <tr>
+      <tr class="{% if item.is_low_stock %}low-stock-row{% endif %}">
         <td>{{ item.name }}</td>
         <td>{{ item.sku }}</td>
         <td>{{ item.quantity }}</td>
-        <td>${{ "%.2f"|format(item.price or 0) }}</td>
+        <td>${{ "%.2f"|format(item.cost_price or 0) }}</td>
         <td><strong>${{ "%.2f"|format(item.value or 0) }}</strong></td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-
 </div>
 
-<!-- LOW STOCK -->
 <div class="card">
-
-  <h3>Low Stock Items</h3>
+  <div class="section-header">
+    <h3>Low Stock Items</h3>
+    <span class="section-note">Threshold: {{ low_stock_threshold }} or fewer</span>
+  </div>
 
   {% if low_stock_items %}
     <ul class="low-stock-list">
       {% for item in low_stock_items %}
-        <li>⚠️ {{ item.name }} — {{ item.quantity }} left</li>
+        <li class="low-stock-item">
+          <span class="low-stock-name">{{ item.name }}</span>
+          <span class="low-stock-meta">
+            SKU: {{ item.sku }} · {{ item.quantity }} left · Threshold: {{ item.low_stock_threshold }}
+          </span>
+        </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p class="muted-text">🎉 No low stock items!</p>
+    <p class="muted-text">No low stock items.</p>
   {% endif %}
-
 </div>
 
 <!-- CHART JS -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
   const labels = {{ labels | default([]) | tojson }};
   const quantities = {{ quantities | default([]) | tojson }};
   const values = {{ values | default([]) | tojson }};
 
   if (!labels.length) return;
 
-  // BAR CHART
   new Chart(document.getElementById("quantityChart"), {
     type: "bar",
     data: {
@@ -121,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // PIE CHART
   new Chart(document.getElementById("valueChart"), {
     type: "pie",
     data: {
@@ -138,7 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
-
 });
 </script>
 

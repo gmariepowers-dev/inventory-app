@@ -10,7 +10,7 @@
 <div class="card">
     <div class="card-header">
         <h2>Users</h2>
-        <a class="btn-primary" href="/admin/add-user">Add User</a>
+        <a class="primary-btn" href="{{ url_for('add_user') }}">Add User</a>
     </div>
 
     <table class="table">
@@ -39,20 +39,17 @@
             </td>
 
             <td>
+                <div class="table-actions">
                     <button type="submit" class="primary-btn">Save</button>
-                </form>
+                    </form>
 
-                <!-- DELETE BUTTON -->
-                <form method="POST"
-                      action="{{ url_for('delete_user', user_id=user.id) }}"
-                      style="display:inline;"
-                      onsubmit="return confirm('Delete this user?')">
-
-                    <button type="submit" class="secondary-btn">
-                        Delete
-                    </button>
-                </form>
-            </td>
+                    <form method="POST"
+                        action="{{ url_for('delete_user', user_id=user.id) }}"
+                        onsubmit="return confirm('Delete this user?')">
+                      <button type="submit" class="secondary-btn">Delete</button>
+                    </form>
+                  </div>
+              </td>
 
         </tr>
         {% endfor %}
@@ -61,45 +58,42 @@
 </div>
 
   <!-- AUDIT LOGS -->
-  <div class="card">
-
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3>Audit Logs</h3>
-      <a href="{{ url_for('view_audit_logs') }}" class="secondary-btn">
-        Open Full Logs
-      </a>
-    </div>
-
-    {% if logs %}
-    <table class="summary-table">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>User</th>
-          <th>Action</th>
-          <th>Target</th>
-          <th>Details</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for log in logs[:10] %}
-        <tr>
-          <td>{{ log.created_at.strftime("%Y-%m-%d %H:%M") if log.created_at else "" }}</td>
-          <td>{{ log.actor.username if log.actor else "System" }}</td>
-          <td>{{ log.action }}</td>
-          <td>{{ log.target or "" }}</td>
-          <td>{{ log.details or "" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <p class="muted-text">No activity yet.</p>
-    {% endif %}
-
+  <!-- AUDIT LOGS -->
+<div class="card">
+  <div class="card-header">
+    <h3>Audit Logs</h3>
+    <a href="{{ url_for('view_audit_logs') }}" class="secondary-btn">
+      Open Full Logs
+    </a>
   </div>
 
+  {% if logs %}
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>User</th>
+        <th>Action</th>
+        <th>Target</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for log in logs[:10] %}
+      <tr>
+        <td>{{ log.created_at.strftime("%Y-%m-%d %H:%M") if log.created_at else "" }}</td>
+        <td>{{ log.actor.username if log.actor else "System" }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.target or "" }}</td>
+        <td>{{ log.details or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="muted-text">No activity yet.</p>
+  {% endif %}
 </div>
 
 {% endblock %}

@@ -51,6 +51,7 @@ class Item(db.Model):
 
     cost_price = db.Column(db.Float, default=0)
     retail_price = db.Column(db.Float, default=0)
+    low_stock_threshold = db.Column(db.Integer, default=5)
 
     order_link = db.Column(db.String(300))
 

@@ -458,12 +458,38 @@ def export_inventory():
 @app.route("/labels")
 @login_required
 def labels_page():
-    return render_template("labels.html", items=Item.query.all())
+    return redirect(url_for("labels_builder"))
 
-@app.route("/generate-label/<int:item_id>")
+
+@app.route("/labels/builder", methods=["GET", "POST"])
 @login_required
-def generate_label(item_id):
-    return render_template("labels.html", item=Item.query.get_or_404(item_id))
+def labels_builder():
+    items = Item.query.order_by(Item.name.asc()).all()
+
+    if request.method == "POST":
+        selected_ids = request.form.getlist("selected_items")
+
+        if not selected_ids:
+            flash("Select at least one item.", "error")
+            return redirect(url_for("labels_builder"))
+
+        selected_items = (
+            Item.query
+            .filter(Item.id.in_(selected_ids))
+            .order_by(Item.name.asc())
+            .all()
+        )
+
+        return render_template("labels_print.html", items=selected_items)
+
+    return render_template("labels_builder.html", items=items)
+
+
+@app.route("/labels/item/<int:item_id>")
+@login_required
+def label_single_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    return render_template("labels_print.html", items=[item])
 
 # --------------------
 # Admin

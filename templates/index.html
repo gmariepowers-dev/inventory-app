@@ -46,9 +46,15 @@
     </form>
   </div>
 
-  <!-- SEARCH -->
+  <!-- SEARCH + LABEL BUILDER -->
   <div class="card">
-    <input type="text" id="searchInput" placeholder="Search">
+    <div style="display:flex; gap:12px; align-items:center;">
+      <input type="text" id="searchInput" placeholder="Search" style="flex:1;">
+
+      <a href="{{ url_for('labels_builder') }}" class="secondary-btn">
+        Label Builder
+      </a>
+    </div>
   </div>
 
   <!-- EMPTY STATE -->
@@ -170,15 +176,4 @@
   </div>
 </div>
 
-<!-- SCANNER -->
-<div id="scannerModal" class="modal" style="display:none;">
-  <div class="modal-card">
-    <button class="close-btn" onclick="closeScanner()">✕</button>
-
-    <h2>Scan Item Barcode</h2>
-    <p class="muted-text">Align barcode inside the frame</p>
-    <div id="scanner"></div>
-
-  </div>
-</div>
 {% endblock %}

@@ -1079,3 +1079,303 @@ input[type="file"] {
 .summary-table td {
   text-align: left;
 }
+
+.label-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.back-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.back-arrow:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.print-top-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.label-sheet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.print-label {
+  width: 4in;
+  height: 2.1in;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0px;
+  padding: 10px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 1.45fr;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  break-inside: avoid;
+}
+
+.label-image-panel {
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 0;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.label-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.label-right-panel {
+  display: grid;
+  grid-template-rows: 0.75fr 1.25fr;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.label-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+
+  padding-left: 10px;
+  padding-right: 2px;
+
+  padding-top: 6px; /* 👈 add this */
+}
+
+.label-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #111111;
+  word-break: break-word;
+}
+
+.label-sku {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #374151;
+  word-break: break-word;
+}
+
+.label-meta {
+  font-size: 10px;
+  line-height: 1.15;
+  color: #4b5563;
+  word-break: break-word;
+}
+
+.label-price {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #1f2937;
+}
+
+.label-barcode-panel {
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  overflow: hidden;
+  min-height: 0;
+  margin-left: 10px;
+  border-radius: 8px;
+}
+
+.label-barcode {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  transform: scale(1.18);
+  transform-origin: center;
+}
+
+.no-barcode {
+  font-size: 10px;
+  text-align: center;
+  color: #6b7280;
+}
+
+@media print {
+  .label-topbar,
+  .page-header,
+  .header,
+  .nav-links {
+    display: none !important;
+  }
+
+  .label-sheet {
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  .print-label {
+    width: 4in;
+    height: 2.1in;
+    box-shadow: none;
+    border: 1px solid #d1d5db;
+    page-break-inside: avoid;
+  }
+}
+.back-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  font-size: 26px;
+  font-weight: 700;
+
+  color: #6b7280; /* gray */
+  text-decoration: none;
+
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.back-arrow:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #374151; /* slightly darker gray on hover */
+}
+
+.back-arrow:visited,
+.back-arrow:active {
+  color: #6b7280;
+}
+.label-image-panel {
+  background: transparent;
+}
+
+.label-barcode-panel {
+  background: transparent;
+}
+.labels-table th,
+.labels-table td {
+  vertical-align: middle;
+}
+
+.checkbox-cell {
+  width: 52px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.checkbox-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+}
+
+.checkbox-wrap input {
+  display: none;
+}
+
+.checkmark {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 6px;
+  background: #ffffff;
+  display: inline-block;
+  position: relative;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+/* hover */
+.checkbox-wrap:hover .checkmark {
+  border-color: #6b7280;
+  background: #f9fafb;
+}
+
+/* checked state → APP BLUE */
+.checkbox-wrap input:checked + .checkmark {
+  background: #2b51a3;
+  border-color: #2b51a3;
+}
+
+/* check icon */
+.checkmark::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+}
+
+/* show check */
+.checkbox-wrap input:checked + .checkmark::after {
+  opacity: 1;
+}
+/* row highlight */
+.labels-table tbody tr.selected-row {
+  background: rgba(43, 81, 163, 0.08); /* light app blue */
+}
+
+/* smooth transition */
+.labels-table tbody tr {
+  transition: background 0.15s ease;
+}
+.checkmark::after {
+  content: "";
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 5px;
+  height: 9px;
+
+  border: solid white;
+  border-width: 0 2px 2px 0;
+
+  transform: translate(-50%, -60%) rotate(45deg);
+  opacity: 0;
+}
+.labels-table tbody tr.selected-row {
+  background: rgba(43, 81, 163, 0.08);
+  box-shadow: inset 3px 0 0 #2b51a3;
+}

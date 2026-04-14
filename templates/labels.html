@@ -1,49 +1,58 @@
 {% extends "base.html" %}
-
 {% block content %}
 
-<div class="card">
+<div class="label-topbar">
+  <a href="{{ url_for('labels_builder') }}" class="back-arrow" aria-label="Back to label builder">
+    ←
+  </a>
 
-  <h2>Label Preview</h2>
-
-  <div class="label-card">
-
-    {% if item.barcode_path %}
-      <img 
-        src="{{ item.barcode_path }}" 
-        alt="Barcode for {{ item.name }}"
-      >
-    {% endif %}
-    
-    <h3>{{ item.name }}</h3>
-    <p><strong>SKU:</strong> {{ item.sku }}</p>
-
-    {% if item.manufacturer %}
-      <p><strong>Manufacturer:</strong> {{ item.manufacturer }}</p>
-    {% endif %}
-
-    {% if item.dimensions %}
-      <p><strong>Dimensions:</strong> {{ item.dimensions }}</p>
-    {% endif %}
-
-    {% if item.weight %}
-      <p><strong>Weight:</strong> {{ item.weight }}</p>
-    {% endif %}
-
-  </div>
-
-  <div style="margin-top:20px; display:flex; gap:10px;">
-
-    <a href="{{ url_for('index') }}" class="secondary-btn">
-      Back to Inventory
-    </a>
-
-    <button onclick="window.print()" class="primary-btn">
-      Export / Print Label
-    </button>
-
-  </div>
-
+  <button class="primary-btn print-top-btn" onclick="window.print()">
+    Print Labels
+  </button>
 </div>
+
+<div class="page-header">
+  <h2>Label Preview</h2>
+</div>
+
+{% if items %}
+<div class="label-sheet">
+  {% for item in items %}
+  <div class="print-label">
+
+    <div class="label-photo-wrap">
+      <img
+        src="{{ item.image_path or '/static/placeholder.png' }}"
+        alt="{{ item.name }}"
+        class="label-photo"
+      >
+    </div>
+
+    <div class="label-info">
+      <div class="label-name">{{ item.name }}</div>
+      <div class="label-row"><strong>SKU:</strong> {{ item.sku or '—' }}</div>
+      <div class="label-row"><strong>Manufacturer:</strong> {{ item.manufacturer or '—' }}</div>
+      <div class="label-row"><strong>Weight:</strong> {{ item.weight or '—' }}</div>
+      <div class="label-row"><strong>Price:</strong> ${{ '%.2f'|format(item.retail_price or 0) }}</div>
+    </div>
+
+    <div class="label-barcode-wrap">
+      {% if item.barcode_path %}
+        <img
+          src="{{ item.barcode_path }}"
+          alt="Barcode for {{ item.sku }}"
+          class="label-barcode"
+        >
+      {% else %}
+        <p class="muted-text">No barcode available</p>
+      {% endif %}
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p>No labels selected yet.</p>
+{% endif %}
 
 {% endblock %}

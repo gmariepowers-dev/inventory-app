@@ -21,6 +21,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+    const params = new URLSearchParams(window.location.search);
+  const openItemId = params.get("open_item");
+
+  if (openItemId) {
+    openItemModal(openItemId);
+
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
   // LIVE quantity input update
   document.addEventListener("input", (e) => {
     if (e.target.id === "modalQtyInput") {
@@ -106,10 +116,10 @@ function openItemModal(id) {
       const labelBtn = document.getElementById("generateLabelBtn");
       if (labelBtn) {
         labelBtn.onclick = () => {
-          window.location.href = `/generate-label/${data.id}`;
+          window.location.href = `/labels/item/${data.id}`;
         };
       }
-
+      
       resetEditMode();
       updateTotalRetailPreview();
     });
@@ -221,16 +231,46 @@ function openScanner() {
   modal.style.display = "flex";
 
   setTimeout(() => {
+    if (html5QrCode) {
+      html5QrCode.stop().catch(() => {});
+      html5QrCode = null;
+    }
+
     html5QrCode = new Html5Qrcode("scanner");
 
     html5QrCode.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       (text) => {
-        window.location.href = `/scan/${text}`;
+        handleScannedCode(text);
       }
     );
-  }, 500);
+  }, 300);
+}
+
+function handleScannedCode(text) {
+  fetch(`/scan/${encodeURIComponent(text)}`)
+    .then(res => res.json())
+    .then(data => {
+      closeScanner();
+
+      if (!data.found) {
+        alert("No matching item found.");
+        return;
+      }
+
+      const itemCard = document.querySelector(`.item-card[data-id="${data.id}"]`);
+
+      if (itemCard) {
+        openItemModal(data.id);
+      } else {
+        window.location.href = `/?open_item=${data.id}`;
+      }
+    })
+    .catch(() => {
+      closeScanner();
+      alert("There was a problem scanning that item.");
+    });
 }
 
 function closeScanner() {
@@ -238,6 +278,13 @@ function closeScanner() {
   if (modal) modal.style.display = "none";
 
   if (html5QrCode) {
-    html5QrCode.stop().catch(() => {});
+    html5QrCode.stop()
+      .then(() => {
+        html5QrCode.clear?.();
+        html5QrCode = null;
+      })
+      .catch(() => {
+        html5QrCode = null;
+      });
   }
 }

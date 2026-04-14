@@ -56,6 +56,18 @@
 
 </main>
 
+<!-- SCANNER -->
+<div id="scannerModal" class="modal" style="display:none;">
+  <div class="modal-card">
+    <button class="close-btn" onclick="closeScanner()">✕</button>
+
+    <h2>Scan Item Barcode</h2>
+    <p class="muted-text">Align barcode inside the frame</p>
+    <div id="scanner"></div>
+
+  </div>
+</div>
+
 <!-- SCRIPTS -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="{{ url_for('static', filename='app.js') }}"></script>

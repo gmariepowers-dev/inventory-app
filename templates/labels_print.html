@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="label-topbar">
+  <a href="{{ url_for('labels_builder') }}" class="back-arrow" aria-label="Back to label builder">
+    ←
+  </a>
+
+  <button class="primary-btn print-top-btn" onclick="window.print()">
+    Print Labels
+  </button>
+</div>
+
+<div class="page-header">
+  <h2>Label Preview</h2>
+</div>
+
+{% if items and items|length > 0 %}
+<div class="label-sheet">
+  {% for item in items %}
+  <div class="print-label">
+
+    <div class="label-image-panel">
+      <img
+        src="{{ item.image_path or '/static/placeholder.png' }}"
+        alt="{{ item.name }}"
+        class="label-photo"
+      >
+    </div>
+
+    <div class="label-right-panel">
+      <div class="label-text-block">
+        <div class="label-name">{{ item.name }}</div>
+        <div class="label-sku">SKU: {{ item.sku or '—' }}</div>
+        <div class="label-meta">Manufacturer: {{ item.manufacturer or '—' }}</div>
+        <div class="label-meta">Weight: {{ item.weight or '—' }}</div>
+        <div class="label-price">${{ '%.2f'|format(item.retail_price or 0) }}</div>
+      </div>
+
+      <div class="label-barcode-panel">
+        {% if item.barcode_path %}
+          <img
+            src="{{ item.barcode_path }}"
+            alt="Barcode for {{ item.sku }}"
+            class="label-barcode"
+          >
+        {% else %}
+          <div class="no-barcode">No barcode available</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p>No labels selected yet.</p>
+{% endif %}
+
+{% endblock %}

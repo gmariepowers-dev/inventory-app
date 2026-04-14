@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="label-topbar">
+  <a href="{{ url_for('index') }}" class="back-arrow" aria-label="Back to inventory">
+    ←
+  </a>
+</div>
+
+<div class="page-header">
+  <h2>Label Builder</h2>
+</div>
+
+<div class="card">
+  <p class="muted-text">
+    Select the items you want to include on the label sheet.
+  </p>
+
+  <form method="POST" action="{{ url_for('labels_builder') }}">
+    <div class="table-scroll">
+      <table class="summary-table labels-table">
+        <thead>
+          <tr>
+            <th class="checkbox-cell">
+              <label class="checkbox-wrap">
+                <input type="checkbox" id="selectAllLabels">
+                <span class="checkmark"></span>
+              </label>
+            </th>
+            <th>Photo</th>
+            <th>Item</th>
+            <th>SKU</th>
+            <th>Manufacturer</th>
+            <th>Weight</th>
+            <th>Retail Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td class="checkbox-cell">
+              <label class="checkbox-wrap">
+                <input
+                  type="checkbox"
+                  name="selected_items"
+                  value="{{ item.id }}"
+                  class="label-checkbox"
+                >
+                <span class="checkmark"></span>
+              </label>
+            </td>
+            <td>
+              <img
+                src="{{ item.image_path or '/static/placeholder.png' }}"
+                alt="{{ item.name }}"
+                style="width:50px; height:50px; object-fit:cover; border-radius:6px;"
+              >
+            </td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.sku or '—' }}</td>
+            <td>{{ item.manufacturer or '—' }}</td>
+            <td>{{ item.weight or '—' }}</td>
+            <td>${{ '%.2f'|format(item.retail_price or 0) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+      <button type="submit" class="primary-btn">Preview Labels</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const selectAll = document.getElementById("selectAllLabels");
+  const itemCheckboxes = document.querySelectorAll(".label-checkbox");
+
+  function updateRowHighlight(checkbox) {
+    const row = checkbox.closest("tr");
+    if (checkbox.checked) {
+      row.classList.add("selected-row");
+    } else {
+      row.classList.remove("selected-row");
+    }
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener("change", function () {
+      itemCheckboxes.forEach(cb => {
+        cb.checked = this.checked;
+        updateRowHighlight(cb);
+      });
+    });
+  }
+
+  itemCheckboxes.forEach(cb => {
+    // initial state (in case page reloads)
+    updateRowHighlight(cb);
+
+    cb.addEventListener("change", function () {
+      updateRowHighlight(this);
+
+      const checkedCount = document.querySelectorAll(".label-checkbox:checked").length;
+      selectAll.checked = checkedCount === itemCheckboxes.length;
+    });
+  });
+</script>
+
+{% endblock %}

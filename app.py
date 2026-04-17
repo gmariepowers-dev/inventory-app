@@ -661,18 +661,24 @@ def backup_db():
 @app.route("/scan/<barcode>")
 @login_required
 def scan_item(barcode):
-
     barcode = barcode.strip()
+    print("SCANNED BARCODE:", repr(barcode))
 
-    item = Item.query.filter(Item.sku.contains(barcode)).first()
+    item = (
+        Item.query.filter(
+            (Item.sku == barcode) | (Item.barcode_value == barcode)
+        ).first()
+    )
+
+    print("FOUND ITEM:", item)
 
     if not item:
-        return {"found": False}
+        return jsonify({"found": False})
 
-    return {
+    return jsonify({
         "found": True,
         "id": item.id
-    }
+    })
 
 # --------------------
 # Create default admin

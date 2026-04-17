@@ -1114,34 +1114,34 @@ input[type="file"] {
 .label-sheet {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .print-label {
-  width: 4in;
-  height: 2.1in;
+  width: 3.5in;
+  height: 2in;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  border-radius: 0px;
-  padding: 10px;
+  border-radius: 0;
+  padding: 6px;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 1fr 1.45fr;
-  gap: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  grid-template-columns: 0.95fr 1.35fr;
+  gap: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   break-inside: avoid;
 }
 
 .label-image-panel {
-  background: #f9fafb;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   min-height: 0;
-  padding: 4px;
-  border-radius: 8px;
+  padding: 0;
+  border-radius: 0;
 }
 
 .label-photo {
@@ -1149,12 +1149,13 @@ input[type="file"] {
   height: 100%;
   object-fit: contain;
   display: block;
+  border-radius: 0;
 }
 
 .label-right-panel {
   display: grid;
-  grid-template-rows: 0.75fr 1.25fr;
-  gap: 8px;
+  grid-template-rows: 0.58fr 1.42fr;
+  gap: 2px;
   min-width: 0;
   min-height: 0;
 }
@@ -1162,56 +1163,55 @@ input[type="file"] {
 .label-text-block {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
-
-  padding-left: 10px;
-  padding-right: 2px;
-
-  padding-top: 6px; /* 👈 add this */
+  padding-left: 8px;
+  padding-right: 0;
+  padding-top: 6px;
 }
 
 .label-name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.05;
   color: #111111;
   word-break: break-word;
 }
 
 .label-sku {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.05;
   color: #374151;
   word-break: break-word;
 }
 
 .label-meta {
-  font-size: 10px;
-  line-height: 1.15;
+  font-size: 9px;
+  line-height: 1.05;
   color: #4b5563;
   word-break: break-word;
 }
 
+
 .label-price {
-  margin-top: 2px;
-  font-size: 13px;
+  margin-top: 1px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.05;
   color: #1f2937;
 }
 
 .label-barcode-panel {
-  background: #ffffff;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 6px;
+  padding: 0;
   overflow: hidden;
   min-height: 0;
-  margin-left: 10px;
-  border-radius: 8px;
+  margin-left: 4px;
+  border-radius: 0;
 }
 
 .label-barcode {
@@ -1219,12 +1219,12 @@ input[type="file"] {
   height: 100%;
   object-fit: contain;
   display: block;
-  transform: scale(1.18);
+  transform: scale(1.1);
   transform-origin: center;
 }
 
 .no-barcode {
-  font-size: 10px;
+  font-size: 9px;
   text-align: center;
   color: #6b7280;
 }
@@ -1238,18 +1238,20 @@ input[type="file"] {
   }
 
   .label-sheet {
-    gap: 8px;
+    gap: 6px;
     margin-top: 0;
   }
 
   .print-label {
-    width: 4in;
-    height: 2.1in;
+    width: 3.5in;
+    height: 2in;
     box-shadow: none;
     border: 1px solid #d1d5db;
+    border-radius: 0;
     page-break-inside: avoid;
   }
 }
+
 .back-arrow {
   display: inline-flex;
   align-items: center;

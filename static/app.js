@@ -486,7 +486,8 @@ function openScanner() {
       { facingMode: "environment" },
       {
         fps: 10,
-        qrbox: { width: 320, height: 180 },
+        qrbox: { width: 320, height: 220 },
+        aspectRatio: 1.7778,
         formatsToSupport: [
           Html5QrcodeSupportedFormats.CODE_128,
           Html5QrcodeSupportedFormats.CODE_39,
@@ -502,10 +503,10 @@ function openScanner() {
       },
       () => {}
     ).catch((err) => {
-      console.error("Scanner failed to start:", err);
-      alert("Scanner could not start.");
-    });
-  }, 300);
+          console.error("Scanner failed to start:", err);
+          alert("Scanner could not start.");
+        });
+      }, 300);
 }
 
 function handleScannedCode(text) {

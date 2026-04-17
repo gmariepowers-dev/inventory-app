@@ -1219,8 +1219,6 @@ input[type="file"] {
   height: 100%;
   object-fit: contain;
   display: block;
-  transform: scale(1.1);
-  transform-origin: center;
 }
 
 .no-barcode {

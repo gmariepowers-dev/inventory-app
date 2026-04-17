@@ -664,11 +664,7 @@ def scan_item(barcode):
     barcode = barcode.strip()
     print("SCANNED BARCODE:", repr(barcode))
 
-    item = (
-        Item.query.filter(
-            (Item.sku == barcode) | (Item.barcode_value == barcode)
-        ).first()
-    )
+    item = Item.query.filter(Item.sku == barcode).first()
 
     print("FOUND ITEM:", item)
 

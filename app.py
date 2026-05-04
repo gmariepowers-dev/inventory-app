@@ -151,12 +151,24 @@ def index():
         
         
 
-        # Barcode 
+       # Barcode
         barcode_dir = os.path.join(app.static_folder, "barcodes")
         os.makedirs(barcode_dir, exist_ok=True)
 
         barcode = Code128(sku, writer=ImageWriter())
-        barcode.save(os.path.join(barcode_dir, sku))
+        barcode.save(
+            os.path.join(barcode_dir, sku),
+            options={
+                "module_width": 0.28,
+                "module_height": 28,
+                "quiet_zone": 7,
+                "font_size": 12,
+                "text_distance": 6,
+                "dpi": 300,
+                "write_text": True,
+            }
+        )
+
         barcode_path = f"/static/barcodes/{sku}.png"
 
         # Image upload

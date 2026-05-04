@@ -31,10 +31,18 @@
     <div class="label-right-panel">
       <div class="label-text-block">
         <div class="label-name">{{ item.name }}</div>
-        <div class="label-sku">SKU: {{ item.sku or '—' }}</div>
-        <div class="label-meta">Manufacturer: {{ item.manufacturer or '—' }}</div>
-        <div class="label-meta">Weight: {{ item.weight or '—' }}</div>
-        <div class="label-price">${{ '%.2f'|format(item.retail_price or 0) }}</div>
+
+        <div class="label-info-grid">
+          <div class="label-info-col">
+            <div class="label-sku">SKU: {{ item.sku or '—' }}</div>
+            <div class="label-price">${{ '%.2f'|format(item.retail_price or 0) }}</div>
+          </div>
+
+          <div class="label-info-col label-info-right">
+            <div class="label-meta">Manufacturer: {{ item.manufacturer or '—' }}</div>
+            <div class="label-meta">Weight: {{ item.weight or '—' }}</div>
+          </div>
+        </div>
       </div>
 
       <div class="label-barcode-panel">

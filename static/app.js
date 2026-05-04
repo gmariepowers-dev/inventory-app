@@ -1,5 +1,6 @@
 let html5QrCode = null;
-let scanInProgress = false
+let scanInProgress = false;
+let scannerStarting = false;
 window.currentItemId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -461,52 +462,83 @@ function adjustQty(change) {
 
 function openScanner() {
   const modal = document.getElementById("scannerModal");
-  if (!modal) {
-    console.error("scannerModal not found");
+  const scannerEl = document.getElementById("scanner");
+
+  if (!modal || !scannerEl) {
+    console.error("Scanner modal or scanner element not found");
     return;
   }
 
-  const scannerEl = document.getElementById("scanner");
-  if (!scannerEl) {
-    console.error("scanner element not found");
-    return;
-  }
+  if (scannerStarting) return;
+  scannerStarting = true;
 
   modal.style.display = "flex";
+  scanInProgress = false;
 
-  setTimeout(() => {
-    if (html5QrCode) {
-      html5QrCode.stop().catch(() => {});
-      html5QrCode = null;
+  setTimeout(async () => {
+    try {
+      if (html5QrCode) {
+        try {
+          await html5QrCode.stop();
+        } catch (_) {
+          // ignore if already stopped
+        }
+
+        try {
+          await html5QrCode.clear();
+        } catch (_) {
+          // ignore clear errors after stop
+        }
+
+        html5QrCode = null;
+      }
+
+      html5QrCode = new Html5Qrcode("scanner");
+
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        {
+          fps: 14,
+          qrbox: { width: 300, height: 120 }
+        },
+        (decodedText) => {
+          console.log("DECODED:", decodedText);
+          handleScannedCode(decodedText);
+        },
+        () => {}
+      );
+
+      console.log("Scanner started successfully");
+    } catch (err) {
+      console.error("Scanner failed to start:", err);
+      alert("Scanner failed to start. Check console.");
+    } finally {
+      scannerStarting = false;
+    }
+  }, 50);
+}
+
+async function closeScanner() {
+  const modal = document.getElementById("scannerModal");
+  if (modal) modal.style.display = "none";
+
+  scanInProgress = false;
+
+  if (html5QrCode) {
+    try {
+      await html5QrCode.stop();
+    } catch (_) {
+      // ignore if already stopped
     }
 
-    html5QrCode = new Html5Qrcode("scanner");
+    try {
+      await html5QrCode.clear();
+    } catch (_) {
+      // ignore clear errors after stop
+    }
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: { width: 320, height: 220 },
-        aspectRatio: 1.7778,
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E
-        ]
-      },
-      (decodedText) => {
-        console.log("DECODED TEXT:", decodedText);
-        handleScannedCode(decodedText);
-      },
-      () => {}
-    ).catch((err) => {
-          console.error("Scanner failed to start:", err);
-          alert("Scanner could not start.");
-        });
-      }, 300);
+    html5QrCode = null;
+  }
 }
 
 function handleScannedCode(text) {
@@ -517,17 +549,14 @@ function handleScannedCode(text) {
   console.log("SCANNED CLEAN TEXT:", cleanText);
 
   fetch(`/scan/${encodeURIComponent(cleanText)}`)
-    .then((res) => {
-      console.log("SCAN FETCH STATUS:", res.status);
-      return res.json();
-    })
-    .then((data) => {
-      console.log("SCAN RESPONSE DATA:", data);
-      closeScanner();
+    .then((res) => res.json())
+    .then(async (data) => {
+      console.log("SCAN RESPONSE:", data);
+      await closeScanner();
 
       if (!data.found) {
+        alert(`Scanned "${cleanText}" but no matching item was found.`);
         scanInProgress = false;
-        alert("No matching item found.");
         return;
       }
 
@@ -539,32 +568,14 @@ function handleScannedCode(text) {
         window.location.href = `/?open_item=${data.id}`;
       }
 
-      scanInProgress = false;
+      setTimeout(() => {
+        scanInProgress = false;
+      }, 1000);
     })
-    .catch((err) => {
+    .catch(async (err) => {
       console.error("SCAN FETCH ERROR:", err);
-      closeScanner();
+      alert("Decoded barcode, but lookup failed.");
+      await closeScanner();
       scanInProgress = false;
-      alert("There was a problem scanning that item.");
     });
-}
-
-function closeScanner() {
-  const modal = document.getElementById("scannerModal");
-  if (modal) modal.style.display = "none";
-
-  if (html5QrCode) {
-    html5QrCode.stop()
-      .then(() => {
-        if (html5QrCode && html5QrCode.clear) {
-          html5QrCode.clear();
-        }
-        html5QrCode = null;
-      })
-      .catch(() => {
-        html5QrCode = null;
-      });
-  }
-
-  scanInProgress = false;
 }

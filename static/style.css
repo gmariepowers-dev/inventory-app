@@ -366,14 +366,6 @@ input[type="file"] {
   cursor: pointer;
 }
 
-/* ===== SCANNER ===== */
-#scanner {
-  width: 100%;
-  height: 260px;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
 /* ===== TABLE ===== */
 .table,
 .summary-table {
@@ -442,18 +434,7 @@ input[type="file"] {
 .page-header {
   margin-bottom: 12px; /* was ~20–40px */
 }
-/* make scanner modal content comfortable */
-#scannerModal .modal-card {
-  max-width: 520px;
-}
 
-/* actual camera area */
-#scanner {
-  width: 100%;
-  height: 340px;     /* bigger + stable */
-  border-radius: 12px;
-  overflow: hidden;
-}
 .field label {
   font-size: 13px;
   font-weight: 600;
@@ -1119,29 +1100,28 @@ input[type="file"] {
 }
 
 .print-label {
-  width: 3.5in;
-  height: 2in;
+  width: 2.8in;
+  height: 1.5in;
   background: #ffffff;
   border: 1px solid #d1d5db;
   border-radius: 0;
-  padding: 6px;
+  padding: 4px;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 0.95fr 1.35fr;
-  gap: 8px;
+  grid-template-columns: 0.82fr 1.48fr;
+  gap: 5px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   break-inside: avoid;
 }
 
 .label-image-panel {
-  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   min-height: 0;
-  padding: 0;
-  border-radius: 0;
+  padding: 1px;
+  background: transparent;
 }
 
 .label-photo {
@@ -1154,71 +1134,90 @@ input[type="file"] {
 
 .label-right-panel {
   display: grid;
-  grid-template-rows: 0.58fr 1.42fr;
-  gap: 2px;
+  grid-template-rows: auto 1fr;
+  gap: 1px;
   min-width: 0;
   min-height: 0;
 }
 
 .label-text-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: block;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+  row-gap: 2px;
   min-width: 0;
-  padding-left: 8px;
-  padding-right: 0;
-  padding-top: 6px;
+  padding: 2px 3px 1px 2px;
+  align-content: start;
 }
 
 .label-name {
-  font-size: 12px;
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 11.2px;
   font-weight: 700;
   line-height: 1.05;
   color: #111111;
   word-break: break-word;
+  margin-bottom: 4px;
+}
+
+.label-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+  align-items: start;
+}
+
+.label-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.label-info-right {
+  text-align: left;
 }
 
 .label-sku {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1.02;
   color: #374151;
   word-break: break-word;
 }
 
 .label-meta {
-  font-size: 9px;
-  line-height: 1.05;
+  font-size: 7.8px;
+  line-height: 1.02;
   color: #4b5563;
   word-break: break-word;
 }
 
-
 .label-price {
-  margin-top: 1px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1.02;
   color: #1f2937;
 }
 
 .label-barcode-panel {
-  background: transparent;
   display: flex;
-  align-items: center;
+  align-items: end;
   justify-content: center;
   padding: 0;
   overflow: hidden;
   min-height: 0;
-  margin-left: 4px;
-  border-radius: 0;
+  margin-left: 0;
+  background: transparent;
 }
 
 .label-barcode {
-  width: 100%;
-  height: 100%;
+  width: 92%;
+  height: 92%;
   object-fit: contain;
   display: block;
+  transform: none;
 }
 
 .no-barcode {
@@ -1378,4 +1377,71 @@ input[type="file"] {
 .labels-table tbody tr.selected-row {
   background: rgba(43, 81, 163, 0.08);
   box-shadow: inset 3px 0 0 #2b51a3;
+}
+
+/* ===== SCANNER ===== */
+#scannerModal .modal-card {
+  max-width: 520px;
+  padding-bottom: 18px;
+}
+
+#scanner {
+  width: 100%;
+  height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+
+#scanner video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+#scanner canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#scanner > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+@media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto;
+    height: auto;
+    background: #ffffff !important;
+  }
+
+  main.page {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .label-sheet {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 4px !important;
+  }
+
+  .print-label {
+    width: 2.8in !important;
+    height: 1.5in !important;
+    box-shadow: none !important;
+    transform: none !important;
+    zoom: 1 !important;
+  }
 }

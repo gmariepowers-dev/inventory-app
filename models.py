@@ -15,7 +15,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
 
-    role = db.Column(db.String(20), default="viewer")
+    role = db.Column(db.String(20), default="viewer", nullable=False)
     # roles: admin, editor, viewer
 
     audit_logs = db.relationship(
@@ -32,6 +32,9 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         return self.role == "admin"
     
+    def __repr__(self):
+        return f"<User {self.username} ({self.role})>"
+    
 # --------------------
 # Item
 # --------------------
@@ -41,7 +44,7 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String(200), nullable=False)
-    sku = db.Column(db.String(100), unique=True, nullable=False)
+    sku = db.Column(db.String(100), unique=True, nullable=False, index=True)
 
     quantity = db.Column(db.Integer, default=0)
 
@@ -50,35 +53,38 @@ class Item(db.Model):
     colorways = db.Column(db.String(200))
     manufacturer = db.Column(db.String(200))
 
-    cost_price = db.Column(db.Float, default=0)
-    retail_price = db.Column(db.Float, default=0)
+    cost_price = db.Column(db.Numeric(10, 2), default=0)
+    retail_price = db.Column(db.Numeric(10, 2), default=0)
     low_stock_threshold = db.Column(db.Integer, default=5)
 
     order_link = db.Column(db.String(300))
 
     barcode_path = db.Column(db.String(300))
+    barcode_value = db.Column(db.String(200), index=True)
     image_path = db.Column(db.String(300))
 
     def to_dict(self):
         quantity = self.quantity or 0
-        retail_price = self.retail_price or 0
+        cost_price = float(self.cost_price or 0)
+        retail_price = float(self.retail_price or 0)
 
         return {
-            "id": self.id,
-            "name": self.name,
-            "sku": self.sku,
-            "quantity": quantity,
-            "manufacturer": self.manufacturer,
-            "dimensions": self.dimensions,
-            "colorways": self.colorways,
-            "cost_price": self.cost_price,
-            "retail_price": retail_price,
-            "image_path": self.image_path,
-            "barcode_path": self.barcode_path,
-            "order_link": self.order_link,
-            "weight": self.weight,
-            "low_stock_threshold": self.low_stock_threshold,
-            "total_retail_value": quantity * retail_price
+        "id": self.id,
+        "name": self.name,
+        "sku": self.sku,
+        "quantity": quantity,
+        "manufacturer": self.manufacturer,
+        "dimensions": self.dimensions,
+        "colorways": self.colorways,
+        "cost_price": cost_price,
+        "retail_price": retail_price,
+        "image_path": self.image_path,
+        "barcode_path": self.barcode_path,
+        "barcode_value": self.barcode_value,
+        "order_link": self.order_link,
+        "weight": self.weight,
+        "low_stock_threshold": self.low_stock_threshold,
+        "total_retail_value": quantity * retail_price
         }
 
     def __repr__(self):
@@ -104,6 +110,7 @@ class AuditLog(db.Model):
     created_at = db.Column(
         db.DateTime,
         default=lambda: datetime.now(timezone.utc),
+        index=True
     )
 
     actor = db.relationship("User", back_populates="audit_logs")

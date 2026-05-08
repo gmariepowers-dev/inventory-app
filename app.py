@@ -1,18 +1,16 @@
 from flask import Flask, request, render_template, redirect, url_for, abort, flash, jsonify, Response
 from models import db, Item, User, AuditLog
-import os,time, shutil, csv
+
+import os
 import time
 import shutil
-import csv
-from flask_sqlalchemy import SQLAlchemy
 
 from io import BytesIO
+from functools import wraps
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
-from openpyxl.utils import get_column_letter
 
-
-from functools import wraps
 from barcode import Code128
 from barcode.writer import ImageWriter 
 
@@ -200,6 +198,7 @@ def index():
             cost_price=float(request.form.get("cost_price") or 0),
             retail_price=float(request.form.get("retail_price") or 0),
             barcode_path=barcode_path,
+            barcode_value=sku,
             image_path=image_path
         )
 
@@ -267,6 +266,8 @@ def adjust_quantity(item_id):
     item.quantity = max(0, (item.quantity or 0) + change)
 
     db.session.commit()
+
+    log_audit("adjust_quantity", target=item.sku, details=f"change {change}, new qty {item.quantity}")
 
     return jsonify({"new_quantity": item.quantity})
 
@@ -448,7 +449,6 @@ def export_inventory():
     for col, width in widths.items():
         ws.column_dimensions[col].width = width
 
-    # Freeze header row
     ws.freeze_panes = "A9"
 
     # Export
@@ -519,43 +519,18 @@ def admin():
         logs=logs
     )
 
-@app.route("/admin/users/create", methods=["POST"])
-@login_required
-@admin_required
-def create_user():
-
-    username = request.form["username"]
-    password = request.form["password"]
-    is_admin = bool(request.form.get("is_admin"))
-
-    if User.query.filter_by(username=username).first():
-        flash("User already exists", "error")
-        return redirect(url_for("admin"))
-
-    new_user = User(
-        username=username,
-        password_hash=generate_password_hash(password),
-        role="admin" if is_admin else "viewer"
-    )
-
-    db.session.add(new_user)
-    db.session.commit()
-
-    log_audit("create_user", target=username)
-
-    flash("User created", "success")
-
-    return redirect(url_for("admin"))
-
 @app.route("/admin/add-user", methods=["GET", "POST"])
 @login_required
 @admin_required
 def add_user():
     if request.method == "POST":
-
         username = request.form["username"]
         password = request.form["password"]
         role = request.form["role"]
+
+        if User.query.filter_by(username=username).first():
+            flash("User already exists", "error")
+            return redirect(url_for("admin"))
 
         new_user = User(
             username=username,
@@ -566,7 +541,10 @@ def add_user():
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for("admin"))  # ✅ INSIDE function
+        log_audit("create_user", target=username)
+        flash("User created", "success")
+
+        return redirect(url_for("admin"))
 
     return render_template("add_user.html")
 
@@ -577,7 +555,6 @@ def edit_user(user_id):
 
     user = User.query.get_or_404(user_id)
 
-    # Prevent deleting/changing yourself dangerously later if you want
     new_role = request.form["role"]
     user.role = new_role
 
@@ -618,9 +595,6 @@ def delete_user(user_id):
 def view_audit_logs():
     logs = AuditLog.query.order_by(AuditLog.id.desc()).limit(200).all()
     return render_template("audit_logs.html", logs=logs)
-
-from flask import Response
-import csv
 
 @app.route("/admin/audit/export")
 @login_required
@@ -676,7 +650,9 @@ def scan_item(barcode):
     barcode = barcode.strip()
     print("SCANNED BARCODE:", repr(barcode))
 
-    item = Item.query.filter(Item.sku == barcode).first()
+    item = Item.query.filter(
+        (Item.sku == barcode) | (Item.barcode_value == barcode)
+    ).first()
 
     print("FOUND ITEM:", item)
 
@@ -692,18 +668,17 @@ def scan_item(barcode):
 # Create default admin
 # --------------------
 def create_admin_if_missing():
-
     if not User.query.filter_by(username="admin").first():
+        default_password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "admin123")
 
         admin = User(
             username="admin",
-            password_hash=generate_password_hash("admin123"),
+            password_hash=generate_password_hash(default_password),
             role="admin"
         )
 
         db.session.add(admin)
         db.session.commit()
-
 
 # --------------------
 # Run

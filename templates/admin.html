@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
 {% block content %}
 
 <div class="page">
@@ -30,16 +33,20 @@
                   <option value="editor" {% if user.role == "editor" %}selected{% endif %}>Editor</option>
                   <option value="viewer" {% if user.role == "viewer" %}selected{% endif %}>Viewer</option>
                 </select>
+
                 <button type="submit" class="primary-btn">Save</button>
               </div>
             </form>
 
+            {% if current_user.id != user.id %}
             <form method="POST"
                   action="{{ url_for('delete_user', user_id=user.id) }}"
                   class="inline-form"
-                  onsubmit="return confirm('Delete this user?')">
-              <button type="submit" class="secondary-btn">Delete</button>
-            </form>
+                  onsubmit="return confirm('Delete this user?')"
+              >
+                <button type="submit" class="secondary-btn">Delete</button>
+              </form>
+              {% endif %}
           </div>
         </div>
 
@@ -54,6 +61,7 @@
               placeholder="Set new password"
               required
               minlength="8"
+              autocomplete="new-password"
             >
             <button type="submit" class="secondary-btn">Reset Password</button>
           </form>
@@ -71,33 +79,35 @@
   </a>
 </div>
 
-  {% if logs %}
-  <table class="summary-table">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>User</th>
-        <th>Action</th>
-        <th>Target</th>
-        <th>Details</th>
-      </tr>
-    </thead>
+{% if logs %}
+  <div class="table-scroll">
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Details</th>
+        </tr>
+      </thead>
 
-    <tbody>
-      {% for log in logs[:10] %}
-      <tr>
-        <td>{{ log.created_at.strftime("%Y-%m-%d %H:%M") if log.created_at else "" }}</td>
-        <td>{{ log.actor.username if log.actor else "System" }}</td>
-        <td>{{ log.action }}</td>
-        <td>{{ log.target or "" }}</td>
-        <td>{{ log.details or "" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-    <p class="muted-text">No activity yet.</p>
-  {% endif %}
+      <tbody>
+        {% for log in logs[:10] %}
+        <tr>
+          <td>{{ log.created_at.strftime("%Y-%m-%d %H:%M") if log.created_at else "" }}</td>
+          <td>{{ log.actor.username if log.actor else "System" }}</td>
+          <td>{{ log.action }}</td>
+          <td>{{ log.target or "" }}</td>
+          <td>{{ log.details or "" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="muted-text">No activity yet.</p>
+{% endif %}
 </div>
 
 {% endblock %}

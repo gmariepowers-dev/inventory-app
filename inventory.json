@@ -9,6 +9,7 @@
     "cost_price": 15,
     "retail_price": 25,
     "image_path": "/static/uploads/example.jpg",
-    "barcode_path": "/static/barcodes/HSPUBG-TAUPE.png"
+    "barcode_path": "/static/barcodes/HSPUBG-TAUPE.png",
+    "barcode_value": "HSPUBG-TAUPE"
   }
 ]

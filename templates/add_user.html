@@ -1,16 +1,33 @@
 {% extends "base.html" %}
 
+{% block title %}Add User{% endblock %}
+
 {% block content %}
 
 <div class="card form-card">
   <h2>Add User</h2>
 
   <form method="POST" class="stack-form">
+
     <label>Username</label>
-    <input type="text" name="username" required>
+    <input
+      type="text"
+      name="username"
+      required
+      autocomplete="username"
+      autocapitalize="none"
+      autocorrect="off"
+      spellcheck="false"
+    >
 
     <label>Password</label>
-    <input type="password" name="password" required>
+    <input
+      type="password"
+      name="password"
+      required
+      minlength="8"
+      autocomplete="new-password"
+    >
 
     <label>Role</label>
     <select name="role">
@@ -19,7 +36,10 @@
       <option value="viewer">Viewer</option>
     </select>
 
-    <button type="submit" class="primary-btn">Create User</button>
+    <button type="submit" class="primary-btn">
+      Create User
+    </button>
+
   </form>
 </div>
 

@@ -28,8 +28,9 @@
 
 
   <!-- CHARTS -->
+   {% if labels %}
   <div class="card summary-chart-section">
-  <h3>Inventory Charts</h3>
+    <h3>Inventory Charts</h3>
 
   <div class="chart-grid">
     <div class="chart-card">
@@ -47,6 +48,11 @@
     </div>
   </div>
 </div>
+{% else %}
+<div class="card">
+  <p class="muted-text">Add inventory items to see charts.</p>
+</div>
+{% endif %}
 
   <!-- ITEM VALUES TABLE -->
   <div class="card">
@@ -58,7 +64,7 @@
         <th>Item</th>
         <th>SKU</th>
         <th>Quantity</th>
-        <th>Price</th>
+        <th>Cost Price</th>
         <th>Total Value</th>
       </tr>
     </thead>
@@ -80,7 +86,7 @@
 <div class="card">
   <div class="section-header">
     <h3>Low Stock Items</h3>
-    <span class="section-note">Threshold: {{ low_stock_threshold }} or fewer</span>
+    <span class="section-note">Based on each item’s threshold</span>
   </div>
 
   {% if low_stock_items %}

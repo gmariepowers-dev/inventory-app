@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% block title %}Server Error{% endblock %}
+
 {% block content %}
 
 <div class="card">
@@ -10,7 +13,7 @@
 
   <div style="margin-top:16px; display:flex; gap:10px;">
     <a href="/" class="primary-btn">Go Home</a>
-    <button onclick="location.reload()" class="secondary-btn">
+    <button type="button" onclick="location.reload()" class="secondary-btn">
       Try Again
     </button>
   </div>

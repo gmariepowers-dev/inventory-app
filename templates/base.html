@@ -12,7 +12,11 @@
 
 <header class="header">
     <div class="nav-left">
-        <img src="{{ url_for('static', filename='logo.png') }}" class="logo-img">
+        <img
+            src="{{ url_for('static', filename='logo.png') }}"
+            class="logo-img"
+            alt="Inventory logo"
+        >
     </div>
 
     <div class="nav-right">
@@ -27,7 +31,7 @@
 
                 <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
 
-                <button class="primary-btn" onclick="openScanner()">
+                <button type="button" class="primary-btn" onclick="openScanner()">
                     Scan
                 </button>
 
@@ -59,7 +63,7 @@
 <!-- SCANNER -->
 <div id="scannerModal" class="modal" style="display:none;">
   <div class="modal-card">
-    <button class="close-btn" onclick="closeScanner()">✕</button>
+    <button type="button" class="close-btn" onclick="closeScanner()">✕</button>
 
     <h2>Scan Item Barcode</h2>
     <p class="muted-text">Align barcode inside the frame</p>
@@ -70,8 +74,8 @@
 
 <!-- SCRIPTS -->
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="{{ url_for('static', filename='app.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
 
 </body>
 </html>

@@ -56,6 +56,23 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
+with app.app_context():
+    db.create_all()
+
+    default_password = os.environ.get("DEFAULT_ADMIN_PASSWORD")
+
+    if default_password:
+        admin_user = User.query.filter_by(username="admin").first()
+
+        if not admin_user:
+            admin_user = User(
+                username="admin",
+                password_hash=generate_password_hash(default_password),
+                role="admin"
+            )
+            db.session.add(admin_user)
+            db.session.commit()
+
 # --------------------
 # Login manager
 # --------------------

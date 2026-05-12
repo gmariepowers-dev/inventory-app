@@ -4,6 +4,10 @@ from models import db, Item, User, AuditLog
 import os
 import time
 import shutil
+import mimetypes
+import uuid
+
+from supabase import create_client
 
 from io import BytesIO
 from functools import wraps
@@ -32,6 +36,32 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_BUCKET = os.environ.get("SUPABASE_BUCKET", "inventory-files")
+
+supabase = None
+
+if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+
+def upload_file_to_supabase(local_file_path, storage_path, content_type="image/png"):
+    if not supabase:
+        return local_file_path
+
+    with open(local_file_path, "rb") as file:
+        supabase.storage.from_(SUPABASE_BUCKET).upload(
+            path=storage_path,
+            file=file,
+            file_options={
+                "content-type": content_type,
+                "upsert": "true"
+            }
+        )
+
+    return supabase.storage.from_(SUPABASE_BUCKET).get_public_url(storage_path)
 
 # --------------------
 # App setup
@@ -178,8 +208,10 @@ def index():
         os.makedirs(barcode_dir, exist_ok=True)
 
         barcode = Code128(sku, writer=ImageWriter())
+        barcode_file_base = os.path.join(barcode_dir, sku)
+
         barcode.save(
-            os.path.join(barcode_dir, sku),
+            barcode_file_base,
             options={
                 "module_width": 0.28,
                 "module_height": 28,
@@ -191,8 +223,15 @@ def index():
             }
         )
 
-        barcode_path = f"/static/barcodes/{sku}.png"
+        local_barcode_path = f"{barcode_file_base}.png"
 
+        barcode_path = upload_file_to_supabase(
+            local_file_path=local_barcode_path,
+            storage_path=f"barcodes/{sku}.png",
+            content_type="image/png"
+        )
+
+        # Image upload
         # Image upload
         image = request.files.get("image")
         image_path = None
@@ -201,13 +240,24 @@ def index():
             if not allowed_file(image.filename):
                 flash("Invalid image type", "error")
                 return redirect(url_for("index"))
-            
+
             image_dir = os.path.join(app.static_folder, "uploads")
             os.makedirs(image_dir, exist_ok=True)
 
-            filename = secure_filename(f"{sku}_{image.filename}")
-            image.save(os.path.join(image_dir, filename))
-            image_path = f"/static/uploads/{filename}"
+            original_filename = secure_filename(image.filename)
+            extension = original_filename.rsplit(".", 1)[1].lower()
+            filename = f"{sku}_{uuid.uuid4().hex}.{extension}"
+
+            local_image_path = os.path.join(image_dir, filename)
+            image.save(local_image_path)
+
+            content_type = mimetypes.guess_type(filename)[0] or "image/jpeg"
+
+            image_path = upload_file_to_supabase(
+                local_file_path=local_image_path,
+                storage_path=f"uploads/{filename}",
+                content_type=content_type
+            )
 
         # Create item
         item = Item(

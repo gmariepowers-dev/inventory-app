@@ -207,8 +207,10 @@ def index():
         barcode_dir = os.path.join(app.static_folder, "barcodes")
         os.makedirs(barcode_dir, exist_ok=True)
 
+        safe_sku = secure_filename(sku)
+
         barcode = Code128(sku, writer=ImageWriter())
-        barcode_file_base = os.path.join(barcode_dir, sku)
+        barcode_file_base = os.path.join(barcode_dir, safe_sku)
 
         barcode.save(
             barcode_file_base,
@@ -227,11 +229,10 @@ def index():
 
         barcode_path = upload_file_to_supabase(
             local_file_path=local_barcode_path,
-            storage_path=f"barcodes/{sku}.png",
+            storage_path=f"barcodes/{safe_sku}.png",
             content_type="image/png"
         )
 
-        # Image upload
         # Image upload
         image = request.files.get("image")
         image_path = None
@@ -703,19 +704,6 @@ def reset_user_password(user_id):
     return redirect(url_for("admin"))
 
 # --------------------
-# Backup
-# --------------------
-@app.route("/admin/backup")
-@login_required
-@admin_required
-def backup_db():
-    backup_path = os.path.join(app.instance_path, f"backup_{int(time.time())}.db")
-    shutil.copy(db_path, backup_path)
-    flash("Backup created", "success")
-    return redirect(url_for("admin"))
-
-
-# --------------------
 # Barcode Scanner
 # --------------------
 @app.route("/scan/<barcode>")
@@ -739,27 +727,10 @@ def scan_item(barcode):
     })
 
 # --------------------
-# Create default admin
-# --------------------
-def create_admin_if_missing():
-    if not User.query.filter_by(username="admin").first():
-        default_password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "admin123")
-
-        admin = User(
-            username="admin",
-            password_hash=generate_password_hash(default_password),
-            role="admin"
-        )
-
-        db.session.add(admin)
-        db.session.commit()
-
-# --------------------
 # Run
 # --------------------
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        create_admin_if_missing()
 
-    app.run(debug=True)
+    app.run(debug=False)

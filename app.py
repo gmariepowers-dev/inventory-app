@@ -215,9 +215,9 @@ def index():
         barcode.save(
             barcode_file_base,
             options={
-                "module_width": 0.28,
-                "module_height": 28,
-                "quiet_zone": 7,
+                "module_width": 0.48,
+                "module_height": 40,
+                "quiet_zone": 12,
                 "font_size": 12,
                 "text_distance": 6,
                 "dpi": 300,

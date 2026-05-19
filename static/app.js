@@ -126,6 +126,11 @@ function openItemModal(id) {
         deleteForm.action = `/delete-item/${data.id}`;
       }
 
+      const updateImageForm = document.getElementById("updateImageForm");
+      if (updateImageForm) {
+        updateImageForm.action = `/item/${data.id}/update-image`;
+      }
+
       resetEditMode();
       updateTotalRetailPreview();
     })

@@ -314,6 +314,48 @@ def edit_item(item_id):
 
     return jsonify({"success": True})
 
+@app.route("/item/<int:item_id>/update-image", methods=["POST"])
+@login_required
+def update_item_image(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    image = request.files.get("image")
+
+    if not image or not image.filename:
+        flash("No image selected", "error")
+        return redirect(url_for("index", open_item=item.id))
+
+    if not allowed_file(image.filename):
+        flash("Invalid image type", "error")
+        return redirect(url_for("index", open_item=item.id))
+
+    image_dir = os.path.join(app.static_folder, "uploads")
+    os.makedirs(image_dir, exist_ok=True)
+
+    original_filename = secure_filename(image.filename)
+    extension = original_filename.rsplit(".", 1)[1].lower()
+    safe_sku = secure_filename(item.sku)
+    filename = f"{safe_sku}_{uuid.uuid4().hex}.{extension}"
+
+    local_image_path = os.path.join(image_dir, filename)
+    image.save(local_image_path)
+
+    content_type = mimetypes.guess_type(filename)[0] or "image/jpeg"
+
+    image_path = upload_file_to_supabase(
+        local_file_path=local_image_path,
+        storage_path=f"uploads/{filename}",
+        content_type=content_type
+    )
+
+    item.image_path = image_path
+    db.session.commit()
+
+    log_audit("update_item_image", target=item.sku)
+
+    flash("Item photo updated", "success")
+    return redirect(url_for("index", open_item=item.id))
+
 @app.route("/set-quantity/<int:item_id>", methods=["POST"])
 @login_required
 def set_quantity(item_id):

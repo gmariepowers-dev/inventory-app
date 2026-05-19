@@ -1307,3 +1307,90 @@ input[type="file"] {
   padding: 8px 12px;
   font-size: 13px;
 }
+
+@media (max-width: 768px) {
+  .header {
+    height: auto;
+    padding: 12px 14px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .page {
+    padding: 0 12px;
+  }
+
+  .card {
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+
+  .item-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .modal-card {
+    width: 96%;
+    max-height: 92vh;
+    padding: 14px;
+  }
+
+  .modal-content {
+    gap: 18px;
+  }
+
+  .modal-right {
+    grid-template-columns: 1fr;
+    padding-left: 0;
+  }
+
+  #modalName,
+  #modalSku,
+  .modal-actions {
+    grid-column: span 1;
+  }
+
+  .modal-img {
+    height: 200px;
+  }
+
+  .modal-barcode {
+    height: 110px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions .primary-btn,
+  .modal-actions .secondary-btn {
+    width: 100%;
+  }
+
+  .quantity-controls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .qty-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+  }
+
+  .summary-table,
+  .table {
+    min-width: 650px;
+  }
+}

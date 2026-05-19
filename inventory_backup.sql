@@ -34,7 +34,6 @@ ALTER SCHEMA auth OWNER TO supabase_admin;
 
 CREATE SCHEMA extensions;
 
-
 ALTER SCHEMA extensions OWNER TO postgres;
 
 --

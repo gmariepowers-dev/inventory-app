@@ -262,6 +262,15 @@ function adjustQty(change) {
     });
 }
 
+function submitImageUpdate() {
+  const form = document.getElementById("updateImageForm");
+  const input = document.getElementById("modalImageInput");
+
+  if (!form || !input || !input.files.length) return;
+
+  form.submit();
+}
+
 function openScanner() {
   const modal = document.getElementById("scannerModal");
   const scannerEl = document.getElementById("scanner");

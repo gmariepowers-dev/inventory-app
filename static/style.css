@@ -1297,3 +1297,13 @@ input[type="file"] {
     page-break-inside: avoid;
   }
 }
+.modal-image-form {
+  margin-top: 10px;
+}
+
+.modal-image-form .secondary-btn {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 13px;
+}

@@ -98,9 +98,20 @@
       <div class="modal-left">
         <img id="modalImage" src="/static/placeholder.png" alt="Item Image" class="modal-img">
 
-        <form id="updateImageForm" method="POST" enctype="multipart/form-data" class="modal-image-form">
-          <input type="file" name="image" accept="image/png, image/jpeg, image/jpg, image/webp" required>
-          <button type="submit" class="secondary-btn">Update Photo</button>
+        <form id="updateImageForm" method="POST" enctype="multipart/form-data" class="modal-image-form edit-field">
+          <input
+            id="modalImageInput"
+            type="file"
+            name="image"
+            accept="image/png, image/jpeg, image/jpg, image/webp"
+            required
+            hidden
+            onchange="submitImageUpdate()"
+          >
+
+          <button type="button" class="secondary-btn" onclick="document.getElementById('modalImageInput').click()">
+            Update Photo
+          </button>
         </form>
 
         <img id="modalBarcode" alt="Barcode" class="modal-barcode">
